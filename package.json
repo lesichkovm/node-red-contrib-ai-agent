@@ -24,13 +24,21 @@
             "email": "lesichkovm@gmail.com"
         }
     ],
-    "license": "MIT",
+    "license": "AGPL-3.0",
+    "dependencies": {
+        "node-red": ">=1.0.0"
+    },
+    "devDependencies": {
+        "eslint": "^8.0.0",
+        "prettier": "^3.0.0"
+    },
+    "engines": {
+        "node": ">=14.0.0"
+    },
     "node-red": {
+        "version": ">=1.0.0",
         "nodes": {
             "ai-agent": "ai-agent.js"
         }
-    },
-    "dependencies": {
-        "knex": "^3.1.0"
     }
 }

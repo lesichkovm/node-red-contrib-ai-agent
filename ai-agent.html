@@ -1,35 +1,99 @@
 <script type="text/javascript">
   RED.nodes.registerType('ai-agent', {
-    category: 'storage',
+    category: 'function',
     color: '#a6bbcf',
     defaults: {
       name: { value: '' },
+      agentType: { 
+        value: 'assistant',
+        required: true,
+        validate: function(val) {
+          return ['assistant', 'chatbot'].includes(val)
+        }
+      },
+      responseType: {
+        value: 'text',
+        required: true,
+        validate: function(val) {
+          return ['text', 'object'].includes(val)
+        }
+      }
     },
     inputs: 1,
     outputs: 1,
-    icon: 'icon.svg',
-    label: function () {
-      return this.name || 'AI Agent'
+    icon: 'font-awesome/fa-robot',
+    label: function() {
+      return this.name || 'AI Agent';
     },
-    oneditprepare: function () {},
-    oneditsave: function () {},
-    oneditresize: function (size) {},
-  })
+    labelStyle: function() {
+      return this.name ? "node_label_italic" : "";
+    },
+    oneditprepare: function() {
+      // Initialize any UI components here
+      $("#node-input-agentType").on('change', function() {
+        // Update UI based on agent type
+      });
+    }
+  });
 </script>
 
 <!-- START: Template -->
 <script type="text/x-red" data-template-name="ai-agent">
-    <div class="form-row">
-      <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-      <input type="text" id="node-input-name">
-    </div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="AI Agent">
+  </div>
+  
+  <div class="form-row">
+    <label for="node-input-agentType"><i class="fa fa-robot"></i> Agent Type</label>
+    <select id="node-input-agentType" style="width: 70%;">
+      <option value="assistant">Assistant</option>
+      <option value="chatbot">Chatbot</option>
+    </select>
+  </div>
+  
+  <div class="form-row">
+    <label for="node-input-responseType"><i class="fa fa-code"></i> Response Format</label>
+    <select id="node-input-responseType" style="width: 70%;">
+      <option value="text">Text Only</option>
+      <option value="object">Structured Object</option>
+    </select>
+  </div>
+  
+  <div class="form-tips">
+    <p><b>Tip:</b> The AI Agent will process incoming messages and respond based on the selected type.</p>
+    <p>Use the <b>Structured Object</b> format for more detailed responses including metadata.</p>
+  </div>
 </script>
 <!-- END: Template -->
 
 <!-- START: Help -->
 <script type="text/x-red" data-help-name="ai-agent">
-  <p>
-    A "batteries included" AI Agent for Node-RED designed to be flexible, portable, and fun to use.
-  </p>
+  <h3>AI Agent Node</h3>
+  <p>An intelligent agent that processes and responds to messages with configurable behavior.</p>
+  
+  <h4>Features</h4>
+  <ul>
+    <li>Multiple agent types (Assistant, Chatbot)</li>
+    <li>Configurable response formats</li>
+    <li>Conversation context tracking</li>
+    <li>Error handling and status reporting</li>
+  </ul>
+  
+  <h4>Usage</h4>
+  <ol>
+    <li>Connect the node to a message source (e.g., HTTP input, inject node)</li>
+    <li>Configure the agent type and response format</li>
+    <li>Process the response in your flow</li>
+  </ol>
+  
+  <h4>Output Formats</h4>
+  <p><b>Text Only:</b> Simple string response</p>
+  <p><b>Structured Object:</b> Detailed response including metadata and context</p>
+  
+  <h4>Examples</h4>
+  <p><b>Input:</b> "Hello"</p>
+  <p><b>Assistant Output:</b> "Hello! How can I assist you today?"</p>
+  <p><b>Chatbot Output:</b> "Hi there! What would you like to chat about?"</p>
 </script>
 <!-- END: Help -->
