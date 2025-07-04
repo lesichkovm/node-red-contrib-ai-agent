@@ -32,11 +32,52 @@
             return this.name || 'AI Model Config';
         },
         oneditprepare: function() {
+            var node = this;
+            
             // Initialize temperature slider
             $('#node-config-input-temperature').on('input', function() {
                 $('#temperature-value').text($(this).val());
             });
-            $('#temperature-value').text($('#node-config-input-temperature').val());
+            
+            // Set initial values
+            $('#node-config-input-name').val(node.name);
+            $('#node-config-input-model').val(node.model);
+            $('#node-config-input-temperature').val(node.temperature);
+            $('#node-config-input-maxTokens').val(node.maxTokens);
+            $('#temperature-value').text(node.temperature);
+            
+            // Set the API key field value from credentials
+            if (node.credentials && node.credentials.apiKey) {
+                $('#node-config-input-credentials-apiKey').val(node.credentials.apiKey);
+            }
+            
+            // Add validation for required fields
+            $('#node-config-dialog-form').on('submit', function(e) {
+                if (!$('#node-config-input-name').val()) {
+                    RED.notify('Please enter a name for the configuration', 'error');
+                    return false;
+                }
+                if (!$('#node-config-input-credentials-apiKey').val()) {
+                    RED.notify('Please enter an OpenRouter API key', 'error');
+                    return false;
+                }
+                if (!$('#node-config-input-model').val()) {
+                    RED.notify('Please select an AI model', 'error');
+                    return false;
+                }
+                return true;
+            });
+        },
+        
+        oneditsave: function() {
+            // Ensure the API key is properly saved in credentials
+            this.credentials = this.credentials || {};
+            this.credentials.apiKey = $('#node-config-input-credentials-apiKey').val();
+        },
+        
+        oneditcancel: function() {
+            // Clean up if needed
+            this.credentials = this.credentials || {};
         }
     });
 </script>
@@ -48,27 +89,56 @@
     </div>
     
     <div class="form-row">
-        <label for="node-config-input-apiKey"><i class="fa fa-key"></i> OpenRouter API Key</label>
-        <input type="password" id="node-config-input-apiKey" placeholder="sk-or-...">
+        <label for="node-config-input-credentials-apiKey"><i class="fa fa-key"></i> OpenRouter API Key</label>
+        <input type="password" id="node-config-input-credentials-apiKey" placeholder="sk-or-...">
     </div>
     
     <div class="form-row">
         <label for="node-config-input-model"><i class="fa fa-microchip"></i> AI Model</label>
         <select id="node-config-input-model" style="width: 70%;">
             <optgroup label="OpenAI">
-                <option value="openai/gpt-4-turbo">GPT-4 Turbo</option>
-                <option value="openai/gpt-4">GPT-4</option>
-                <option value="openai/gpt-3.5-turbo" selected>GPT-3.5 Turbo</option>
+                <option value="openai/gpt-4o-mini">GPT-4o Mini ($0.15/1M input, $0.60/1M output)</option>
+                <option value="openai/gpt-4-turbo">GPT-4 Turbo ($0.01/1K tokens)</option>
+                <option value="openai/gpt-4">GPT-4 ($0.03/1K tokens)</option>
+                <option value="openai/gpt-3.5-turbo" selected>GPT-3.5 Turbo ($0.0015/1K tokens)</option>
             </optgroup>
             <optgroup label="Anthropic">
-                <option value="anthropic/claude-2">Claude 2</option>
-                <option value="anthropic/claude-instant-v1">Claude Instant</option>
+                <option value="anthropic/claude-2">Claude 2 ($0.01102/1K tokens)</option>
+                <option value="anthropic/claude-instant-v1">Claude Instant ($0.00163/1K tokens)</option>
             </optgroup>
-            <optgroup label="Google">
-                <option value="google/gemini-pro">Gemini Pro</option>
+            <optgroup label="Google Gemini 2.5">
+                <option value="google/gemini-2.5-flash-lite-preview-06-17">Gemini 2.5 Flash Lite ($0.10/1M input, $0.40/1M output)</option>
+                <option value="google/gemini-2.5-flash">Gemini 2.5 Flash ($0.30/1M input, $2.50/1M output)</option>
+                <option value="google/gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash 05-20 ($0.15/1M input, $0.60/1M output)</option>
+                <option value="google/gemini-2.5-flash-preview-05-20:thinking">Gemini 2.5 Flash 05-20 Thinking ($0.15/1M input, $3.50/1M output)</option>
+                <option value="google/gemini-2.5-pro">Gemini 2.5 Pro ($1.25/1M input, $10/1M output)</option>
+                <option value="google/gemini-2.5-pro-preview">Gemini 2.5 Pro Preview ($1.25/1M input, $10/1M output)</option>
+            </optgroup>
+            <optgroup label="Google Gemini 2.0">
+                <option value="google/gemini-2.0-flash-lite-001">Gemini 2.0 Flash Lite ($0.075/1M input, $0.30/1M output)</option>
+                <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash ($0.10/1M input, $0.40/1M output)</option>
+                <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Experimental (Free tier)</option>
+            </optgroup>
+            <optgroup label="Google Gemini 1.5">
+                <option value="google/gemini-flash-1.5">Gemini 1.5 Flash ($0.075/1M input, $0.30/1M output)</option>
+                <option value="google/gemini-flash-1.5-8b">Gemini 1.5 Flash 8B ($0.038/1M input, $0.15/1M output)</option>
+                <option value="google/gemini-pro-1.5">Gemini 1.5 Pro ($1.25/1M input, $5/1M output)</option>
+            </optgroup>
+            <optgroup label="Google Gemma 3">
+                <option value="google/gemma-3-4b-it">Gemma 3 4B ($0.02/1M input, $0.04/1M output)</option>
+                <option value="google/gemma-3-4b-it:free">Gemma 3 4B (Free tier)</option>
+                <option value="google/gemma-3-12b-it">Gemma 3 12B ($0.05/1M input, $0.10/1M output)</option>
+                <option value="google/gemma-3-12b-it:free">Gemma 3 12B (Free tier)</option>
+                <option value="google/gemma-3-27b-it">Gemma 3 27B ($0.09/1M input, $0.17/1M output)</option>
+                <option value="google/gemma-3-27b-it:free">Gemma 3 27B (Free tier)</option>
+            </optgroup>
+            <optgroup label="Google Gemma 2">
+                <option value="google/gemma-2-9b-it">Gemma 2 9B ($0.20/1M input/output)</option>
+                <option value="google/gemma-2-9b-it:free">Gemma 2 9B (Free tier)</option>
+                <option value="google/gemma-2-27b-it">Gemma 2 27B ($0.80/1M input/output)</option>
             </optgroup>
             <optgroup label="Meta">
-                <option value="meta-llama/llama-2-70b-chat">Llama 2 70B</option>
+                <option value="meta-llama/llama-2-70b-chat">Llama 2 70B ($0.0009/1K tokens)</option>
             </optgroup>
         </select>
     </div>
