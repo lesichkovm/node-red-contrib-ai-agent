@@ -125,6 +125,17 @@ module.exports = function (RED) {
       
       node.status({fill:"blue", shape:"dot", text:"Calling " + aiConfig.model + "..."});
       
+      // Prepare tools array if available
+      const tools = aiConfig.tools ? aiConfig.tools.map(tool => ({
+        type: 'function',
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.parameters || {}
+        }
+      })) : [];
+      
+      // Initial API call
       const response = await axios.post(
         'https://openrouter.ai/api/v1/chat/completions',
         {
@@ -132,6 +143,8 @@ module.exports = function (RED) {
           messages: messages,
           temperature: aiConfig.temperature || 0.7,
           max_tokens: aiConfig.maxTokens || 1000,
+          tools: tools.length > 0 ? tools : undefined,
+          tool_choice: tools.length > 0 ? 'auto' : 'none'
         },
         {
           headers: {
@@ -143,7 +156,58 @@ module.exports = function (RED) {
         }
       );
       
-      return response.data.choices[0].message.content.trim();
+      const responseMessage = response.data.choices[0].message;
+      
+      // Check if the model wants to call a tool
+      const toolCalls = responseMessage.tool_calls;
+      if (toolCalls && toolCalls.length > 0) {
+        // Process each tool call
+        for (const toolCall of toolCalls) {
+          const functionName = toolCall.function.name;
+          const functionArgs = JSON.parse(toolCall.function.arguments || '{}');
+          
+          // Find the tool
+          const tool = aiConfig.tools?.find(t => t.name === functionName);
+          if (!tool) {
+            throw new Error(`Tool ${functionName} not found`);
+          }
+          
+          // Execute the tool
+          const toolResponse = await tool.execute(functionArgs);
+          
+          // Add the tool response to the messages
+          messages.push({
+            role: 'tool',
+            content: JSON.stringify(toolResponse),
+            tool_call_id: toolCall.id
+          });
+        }
+        
+        // Make a second request with the tool responses
+        const secondResponse = await axios.post(
+          'https://openrouter.ai/api/v1/chat/completions',
+          {
+            model: aiConfig.model,
+            messages: messages,
+            temperature: aiConfig.temperature || 0.7,
+            max_tokens: aiConfig.maxTokens || 1000,
+            tools: tools,
+            tool_choice: 'none' // Force the model to respond normally
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${aiConfig.apiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://nodered.org/',
+              'X-Title': 'Node-RED AI Agent'
+            }
+          }
+        );
+        
+        return secondResponse.data.choices[0].message.content.trim();
+      }
+      
+      return responseMessage.content.trim();
     }
   }
 
