@@ -11,28 +11,51 @@ module.exports = function(RED) {
         
         // Process incoming messages
         this.on('input', function(msg, send, done) {
-            // Clone the message to avoid modifying the original
-            const newMsg = RED.util.cloneMessage(msg);
-            
-            // Add AI configuration to the message
-            newMsg.aiagent = {
-                model: this.model,
-                apiKey: this.apiKey,
-                temperature: this.temperature,
-                maxTokens: this.maxTokens
-            };
-            
-            // Send the modified message
-            send(newMsg);
-            
-            // Complete the async operation
-            if (done) {
-                done();
+            try {
+                // Validate configuration
+                if (!this.model || !this.apiKey) {
+                    this.status({fill:"red", shape:"ring", text:"Error: Invalid configuration"});
+                    this.error("AI Model node is not properly configured. Please check your settings.", msg);
+                    if (done) done();
+                    return;
+                }
+                
+                // Clone the message to avoid modifying the original
+                const newMsg = RED.util.cloneMessage(msg);
+                
+                // Add AI configuration to the message
+                newMsg.aiagent = {
+                    model: this.model,
+                    apiKey: this.apiKey,
+                    temperature: this.temperature,
+                    maxTokens: this.maxTokens
+                };
+                
+                // Update node status
+                this.status({fill:"green", shape:"dot", text:"Ready"});
+                
+                // Send the modified message
+                send([newMsg, null]);
+                
+                // Complete the async operation
+                if (done) {
+                    done();
+                }
+            } catch (error) {
+                this.status({fill:"red", shape:"ring", text:"Error processing message"});
+                this.error("Error in AI Model node: " + error.message, msg);
+                if (done) done();
             }
         }.bind(this));
+        
+        // Handle node cleanup
+        this.on('close', function(done) {
+            this.status({});
+            if (done) done();
+        });
     }
 
-    // Register the node type as a configuration node
+    // Register the node type
     RED.nodes.registerType("ai-model", AiModelNode, {
         credentials: {
             apiKey: { type: "password" }

@@ -43,29 +43,38 @@ module.exports = function (RED) {
 
     // Process incoming messages
     node.on('input', async function (msg, send, done) {
+      // Set status to processing
+      node.status({ fill: 'blue', shape: 'dot', text: 'processing...' });
+      
+      // Validate AI configuration
+      const validateAIConfig = () => {
+        if (!msg.aiagent || !msg.aiagent.model || !msg.aiagent.apiKey) {
+          const errorMsg = 'Missing required AI configuration. Ensure an AI Model node is properly connected and configured.';
+          node.status({ fill: 'red', shape: 'ring', text: 'Error: Missing AI config' });
+          node.error(errorMsg, msg);
+          throw new Error(errorMsg);
+        }
+      };
+      
       try {
-        // Set status to processing
-        node.status({ fill: 'blue', shape: 'dot', text: 'processing...' })
+        validateAIConfig();
         
         // Get input from message or use default
-        const input = msg.payload || {}
-        const inputText = typeof input === 'string' ? input : JSON.stringify(input)
+        const input = msg.payload || {};
+        const inputText = typeof input === 'string' ? input : JSON.stringify(input);
         
         // Update conversation context
-        node.context.lastInteraction = new Date()
-        node.context.conversation.push({ role: 'user', content: inputText, timestamp: node.context.lastInteraction })
+        node.context.lastInteraction = new Date();
+        node.context.conversation.push({ 
+          role: 'user', 
+          content: inputText, 
+          timestamp: node.context.lastInteraction 
+        });
         
         let response;
         
         // Handle different agent types
         if (node.agentType === 'openrouter') {
-          // Check for required AI configuration in message
-          if (!msg.aiagent || !msg.aiagent.model || !msg.aiagent.apiKey) {
-            node.status({fill:"red", shape:"ring", text:"Error: Missing AI configuration"});
-            node.error("Missing AI configuration in msg.aiagent. Make sure to connect an AI Model node first.", msg);
-            if (done) done(new Error("Missing AI configuration"));
-            return;
-          }
           
           try {
             // Use OpenRouter for AI responses
