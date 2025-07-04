@@ -1,6 +1,7 @@
 <script type="text/javascript">
     RED.nodes.registerType('ai-memory-inmem', {
         category: 'AI Agent',
+        paletteLabel: 'AI Memory (In-Mem)',
         color: "#a6bbcf",
         defaults: {
             name: { value: "" },
@@ -14,7 +15,7 @@
         outputs: 1,
         icon: "font-awesome/fa-microchip",
         label: function() {
-            return this.name || "AI Memory (In-Memory)";
+            return this.name || "AI Memory (In-Mem)";
         },
         labelStyle: function() {
             return this.name ? "node_label_italic" : "";
@@ -51,17 +52,98 @@
 
 <script type="text/html" data-help-name="ai-memory-inmem">
     <p>Stores AI memories in memory (volatile).</p>
-    <h3>Inputs</h3>
-    <dl class="message-properties">
-        <dt>payload <span>object|string</span></dt>
-        <dd>The message to store or retrieve from memory.</dd>
+    <h3>Memory Operations</h3>
+    <p>Use different topics to perform memory operations:</p>
+    <dl>
+        <dt>store</dt>
+        <dd>
+            <p>Store a new memory item</p>
+            <pre>
+{
+    "topic": "store",
+    "payload": {
+        "content": "The memory content",
+        "type": "optional type",
+        "metadata": {
+            "any": "additional data"
+        }
+    }
+}</pre>
+        </dd>
+
+        <dt>search</dt>
+        <dd>
+            <p>Search through existing memories</p>
+            <pre>
+{
+    "topic": "search",
+    "payload": "search term"
+}</pre>
+        </dd>
+
+        <dt>count</dt>
+        <dd>
+            <p>Get the number of stored memories</p>
+            <pre>
+{
+    "topic": "count"
+}</pre>
+        </dd>
+
+        <dt>(no topic)</dt>
+        <dd>
+            <p>Get all stored memories</p>
+            <pre>
+{
+    "payload": "any value"
+}</pre>
+        </dd>
     </dl>
-    <h3>Outputs</h3>
-    <dl class="message-properties">
-        <dt>payload <span>object|string</span></dt>
-        <dd>The processed message with memory operations applied.</dd>
+
+    <h3>Output Format</h3>
+    <dl>
+        <dt>store</dt>
+        <dd>
+            <pre>
+{
+    "stored": true,
+    "memory": {
+        "content": "...",
+        "type": "...",
+        "metadata": { ... },
+        "timestamp": "..."
+    }
+}</pre>
+        </dd>
+
+        <dt>search</dt>
+        <dd>
+            <pre>
+{
+    "results": [ ... ],
+    "count": number
+}</pre>
+        </dd>
+
+        <dt>count</dt>
+        <dd>
+            <pre>
+{
+    "count": number
+}</pre>
+        </dd>
+
+        <dt>(no topic)</dt>
+        <dd>
+            <pre>
+{
+    "memories": [ ... ]
+}</pre>
+        </dd>
     </dl>
+
     <h3>Details</h3>
-    <p>This node stores memories in memory only. All data will be lost when Node-RED is restarted.</p>
+    <p>This node stores memories in memory only. All data will be lost when Node-RED restarts.</p>
     <p>Use this for temporary storage or when persistence is not required.</p>
+    <p>Each memory item automatically gets a timestamp when stored.</p>
 </script>

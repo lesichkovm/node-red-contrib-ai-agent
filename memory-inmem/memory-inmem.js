@@ -6,11 +6,8 @@ module.exports = function(RED) {
         const node = this;
         
         // Configuration
-        node.name = config.name || 'AI Memory (In-Memory)';
+        node.name = config.name || 'AI Memory (In-Mem)';
         node.maxItems = parseInt(config.maxItems) || 1000;
-        
-        // Initialize in-memory store
-        node.memories = [];
         
         // Status
         node.status({fill:"green",shape:"dot",text:"Ready"});
@@ -18,22 +15,23 @@ module.exports = function(RED) {
         // Handle incoming messages
         node.on('input', function(msg) {
             try {
-                // For now, just pass through the message
-                // We'll add memory operations in the next iteration
+                // Initialize or reset aimemory
+                msg.aimemory = { 
+                    type: 'inmemory',
+                    maxItems: node.maxItems,
+                    context: []
+                };
+
                 node.send(msg);
-                
-                // Update status
-                node.status({fill:"green",shape:"dot",text:node.memories.length + " items"});
+                node.status({fill:"green",shape:"dot",text:"ready"});
             } catch (err) {
                 node.error("Error in memory node: " + err.message, msg);
                 node.status({fill:"red",shape:"ring",text:"Error"});
             }
         });
 
-        // Cleanup on node removal
+        // No cleanup needed since we don't maintain state
         node.on('close', function() {
-            // Clear the in-memory store
-            node.memories = [];
             node.status({});
         });
     }
