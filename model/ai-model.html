@@ -1,0 +1,100 @@
+<script type="text/javascript">
+    RED.nodes.registerType('ai-model', {
+        category: 'AI Agent',
+        defaults: {
+            name: { value: '' },
+            model: {
+                value: 'openai/gpt-3.5-turbo',
+                required: true,
+                validate: function(val) {
+                    return val && val.length > 0;
+                }
+            },
+            temperature: {
+                value: 0.7,
+                validate: RED.validators.number(),
+                required: true
+            },
+            maxTokens: {
+                value: 1000,
+                validate: RED.validators.number(),
+                required: true
+            }
+        },
+        credentials: {
+            apiKey: { type: "text" }
+        },
+        label: function() {
+            return this.name || 'AI Model Config';
+        },
+        oneditprepare: function() {
+            // Initialize temperature slider
+            $('#node-config-input-temperature').on('input', function() {
+                $('#temperature-value').text($(this).val());
+            });
+            $('#temperature-value').text($('#node-config-input-temperature').val());
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="ai-model">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="AI Model">
+    </div>
+    
+    <div class="form-row">
+        <label for="node-config-input-apiKey"><i class="fa fa-key"></i> OpenRouter API Key</label>
+        <input type="password" id="node-config-input-apiKey" placeholder="sk-or-...">
+    </div>
+    
+    <div class="form-row">
+        <label for="node-config-input-model"><i class="fa fa-microchip"></i> AI Model</label>
+        <select id="node-config-input-model" style="width: 70%;">
+            <optgroup label="OpenAI">
+                <option value="openai/gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="openai/gpt-4">GPT-4</option>
+                <option value="openai/gpt-3.5-turbo" selected>GPT-3.5 Turbo</option>
+            </optgroup>
+            <optgroup label="Anthropic">
+                <option value="anthropic/claude-2">Claude 2</option>
+                <option value="anthropic/claude-instant-v1">Claude Instant</option>
+            </optgroup>
+            <optgroup label="Google">
+                <option value="google/gemini-pro">Gemini Pro</option>
+            </optgroup>
+            <optgroup label="Meta">
+                <option value="meta-llama/llama-2-70b-chat">Llama 2 70B</option>
+            </optgroup>
+        </select>
+    </div>
+    
+    <div class="form-row">
+        <label for="node-config-input-temperature"><i class="fa fa-thermometer-half"></i> Temperature</label>
+        <input type="range" id="node-config-input-temperature" min="0" max="2" step="0.1" style="width: 50%;">
+        <span id="temperature-value" style="margin-left: 10px;">0.7</span>
+    </div>
+    
+    <div class="form-row">
+        <label for="node-config-input-maxTokens"><i class="fa fa-font"></i> Max Tokens</label>
+        <input type="number" id="node-config-input-maxTokens" min="1" max="4000" value="1000" style="width: 30%;">
+    </div>
+    
+    <div class="form-tips">
+        <p><b>Note:</b> You'll need an OpenRouter API key to use AI models.</p>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="ai-model">
+    <h3>AI Model Configuration</h3>
+    <p>Configure your AI model settings for use with AI Agent nodes.</p>
+    
+    <h4>Configuration</h4>
+    <ul>
+        <li><b>Name:</b> A name for this configuration</li>
+        <li><b>OpenRouter API Key:</b> Your OpenRouter API key (required)</li>
+        <li><b>AI Model:</b> The AI model to use for generating responses</li>
+        <li><b>Temperature:</b> Controls randomness (0 = deterministic, 2 = very random)</li>
+        <li><b>Max Tokens:</b> Maximum number of tokens to generate in the response</li>
+    </ul>
+</script>

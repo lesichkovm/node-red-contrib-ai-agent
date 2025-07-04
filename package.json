@@ -26,7 +26,8 @@
     ],
     "license": "AGPL-3.0",
     "dependencies": {
-        "node-red": ">=1.0.0"
+        "node-red": ">=1.0.0",
+        "axios": "^1.6.0"
     },
     "devDependencies": {
         "eslint": "^8.0.0",
@@ -38,7 +39,8 @@
     "node-red": {
         "version": ">=1.0.0",
         "nodes": {
-            "ai-agent": "ai-agent.js"
+            "ai-agent": "./agent/ai-agent.js",
+            "ai-model": "./model/ai-model.js"
         }
     }
 }

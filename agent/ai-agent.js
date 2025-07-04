@@ -1,3 +1,5 @@
+const axios = require('axios');
+
 module.exports = function (RED) {
   function AiAgentNode(config) {
     RED.nodes.createNode(this, config)
@@ -40,7 +42,7 @@ module.exports = function (RED) {
     })
 
     // Process incoming messages
-    node.on('input', function (msg, send, done) {
+    node.on('input', async function (msg, send, done) {
       try {
         // Set status to processing
         node.status({ fill: 'blue', shape: 'dot', text: 'processing...' })
@@ -53,8 +55,32 @@ module.exports = function (RED) {
         node.context.lastInteraction = new Date()
         node.context.conversation.push({ role: 'user', content: inputText, timestamp: node.context.lastInteraction })
         
-        // Process the input and generate response
-        const response = processInput(inputText, node.context, node.responses[node.agentType] || node.responses.assistant)
+        let response;
+        
+        // Handle different agent types
+        if (node.agentType === 'openrouter') {
+          // Check for required AI configuration in message
+          if (!msg.aiagent || !msg.aiagent.model || !msg.aiagent.apiKey) {
+            node.status({fill:"red", shape:"ring", text:"Error: Missing AI configuration"});
+            node.error("Missing AI configuration in msg.aiagent. Make sure to connect an AI Model node first.", msg);
+            if (done) done(new Error("Missing AI configuration"));
+            return;
+          }
+          
+          try {
+            // Use OpenRouter for AI responses
+            response = await generateAIResponse.call(node, inputText, msg.aiagent);
+          } catch (error) {
+            const errorMsg = error.response?.data?.error?.message || error.message;
+            node.status({fill:"red", shape:"ring", text:"API Error: " + (errorMsg || 'Unknown error').substring(0, 30)});
+            node.error('OpenRouter API Error: ' + errorMsg, msg);
+            if (done) done(error);
+            return;
+          }
+        } else {
+          // Use simple rule-based responses for assistant/chatbot
+          response = processInput(inputText, node.context, node.responses[node.agentType] || node.responses.assistant);
+        }
         
         // Update context with AI response
         node.context.conversation.push({ role: 'assistant', content: response, timestamp: new Date() })
@@ -96,6 +122,44 @@ module.exports = function (RED) {
         }
       }
     })
+    
+    // Generate AI response using OpenRouter API
+    async function generateAIResponse(input, aiConfig) {
+      const messages = [
+        {
+          role: 'system',
+          content: node.agentType === 'assistant' ? 
+            'You are a helpful AI assistant.' : 
+            'You are a friendly and engaging chatbot.'
+        },
+        {
+          role: 'user',
+          content: input
+        }
+      ];
+      
+      node.status({fill:"blue", shape:"dot", text:"Calling " + aiConfig.model + "..."});
+      
+      const response = await axios.post(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          model: aiConfig.model,
+          messages: messages,
+          temperature: aiConfig.temperature || 0.7,
+          max_tokens: aiConfig.maxTokens || 1000,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${aiConfig.apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://nodered.org/',
+            'X-Title': 'Node-RED AI Agent'
+          }
+        }
+      );
+      
+      return response.data.choices[0].message.content.trim();
+    }
     
     // Simple input processing function
     function processInput(input, context, responses) {

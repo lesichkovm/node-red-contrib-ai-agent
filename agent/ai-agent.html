@@ -1,38 +1,43 @@
 <script type="text/javascript">
   RED.nodes.registerType('ai-agent', {
-    category: 'function',
+    category: 'AI Agent',
     color: '#a6bbcf',
     defaults: {
       name: { value: '' },
       agentType: { 
-        value: 'assistant',
+        value: 'assistant', 
         required: true,
         validate: function(val) {
-          return ['assistant', 'chatbot'].includes(val)
+          return ['assistant', 'chatbot', 'openrouter'].includes(val);
         }
       },
-      responseType: {
-        value: 'text',
+      responseType: { 
+        value: 'text', 
         required: true,
         validate: function(val) {
-          return ['text', 'object'].includes(val)
+          return ['text', 'object'].includes(val);
         }
       }
     },
     inputs: 1,
     outputs: 1,
-    icon: 'font-awesome/fa-robot',
+    icon: 'font-awesome/fa-comment',
     label: function() {
       return this.name || 'AI Agent';
     },
-    labelStyle: function() {
-      return this.name ? "node_label_italic" : "";
-    },
+    paletteLabel: 'AI Agent',
     oneditprepare: function() {
-      // Initialize any UI components here
-      $("#node-input-agentType").on('change', function() {
-        // Update UI based on agent type
+      // Show/hide settings based on agent type
+      $('#node-input-agentType').on('change', function() {
+        if ($(this).val() === 'openrouter') {
+          $('#openrouter-help').show();
+        } else {
+          $('#openrouter-help').hide();
+        }
       });
+      
+      // Trigger change to set initial state
+      $('#node-input-agentType').trigger('change');
     }
   });
 </script>
@@ -46,23 +51,24 @@
   
   <div class="form-row">
     <label for="node-input-agentType"><i class="fa fa-robot"></i> Agent Type</label>
-    <select id="node-input-agentType" style="width: 70%;">
-      <option value="assistant">Assistant</option>
-      <option value="chatbot">Chatbot</option>
+    <select id="node-input-agentType" style="width: 100%;">
+      <option value="assistant">Assistant (Simple Rules)</option>
+      <option value="chatbot">Chatbot (Simple Rules)</option>
+      <option value="openrouter">OpenRouter (AI-Powered)</option>
     </select>
   </div>
   
   <div class="form-row">
-    <label for="node-input-responseType"><i class="fa fa-code"></i> Response Format</label>
-    <select id="node-input-responseType" style="width: 70%;">
+    <label for="node-input-responseType"><i class="fa fa-reply"></i> Response Format</label>
+    <select id="node-input-responseType" style="width: 100%;">
       <option value="text">Text Only</option>
       <option value="object">Structured Object</option>
     </select>
   </div>
   
-  <div class="form-tips">
-    <p><b>Tip:</b> The AI Agent will process incoming messages and respond based on the selected type.</p>
-    <p>Use the <b>Structured Object</b> format for more detailed responses including metadata.</p>
+  <div id="openrouter-help" class="form-tips" style="display: none; margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #3b78e7;">
+    <p><i class="fa fa-info-circle"></i> <strong>Note:</strong> When using OpenRouter, connect an AI Model node to provide the model and API key configuration.</p>
+    <p>The AI Model node will add an <code>aiagent</code> property to the message with the required configuration.</p>
   </div>
 </script>
 <!-- END: Template -->
