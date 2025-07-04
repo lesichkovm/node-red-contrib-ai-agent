@@ -70,7 +70,13 @@
         },
         
         oneditsave: function() {
-            // Ensure the API key is properly saved in credentials
+            // Save all configuration values
+            this.name = $('#node-config-input-name').val();
+            this.model = $('#node-config-input-model').val();
+            this.temperature = parseFloat($('#node-config-input-temperature').val());
+            this.maxTokens = parseInt($('#node-config-input-maxTokens').val());
+            
+            // Ensure credentials are properly saved
             this.credentials = this.credentials || {};
             this.credentials.apiKey = $('#node-config-input-credentials-apiKey').val();
         },
