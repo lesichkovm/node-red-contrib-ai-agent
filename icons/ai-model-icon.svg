@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="modelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#32cd32;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#228b22;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    <rect x="5" y="25" width="90" height="50" rx="10" fill="url(#modelGradient)" stroke="#1e7a1e" stroke-width="2"/>
+    <circle cx="25" cy="50" r="8" fill="white" opacity="0.8"/>
+</svg>

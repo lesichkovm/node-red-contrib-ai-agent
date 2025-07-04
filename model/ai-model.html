@@ -3,7 +3,10 @@
         category: 'AI Agent',
         inputs: 1,
         outputs: 1,
-        icon: './icon.svg',
+        icon: 'ai-model-icon.svg',
+        label: function() {
+            return this.name || 'AI Agent';
+        },
         color: '#a6bbcf',
         defaults: {
             name: { value: '' },
@@ -27,9 +30,6 @@
         },
         credentials: {
             apiKey: { type: "text" }
-        },
-        label: function() {
-            return this.name || 'AI Model Config';
         },
         oneditprepare: function() {
             var node = this;
@@ -213,12 +213,21 @@
                 <option value="google/gemini-2.5-flash">Gemini 2.5 Flash ($0.30/1M input, $2.50/1M output)</option>
                 <option value="google/gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash 05-20 ($0.15/1M input, $0.60/1M output)</option>
                 <option value="google/gemini-2.5-flash-preview-05-20:thinking">Gemini 2.5 Flash 05-20 Thinking ($0.15/1M input, $3.50/1M output)</option>
-                <option value="google/gemini-2.5-pro">Gemini 2.5 Pro ($1.25/1M input, $10/1M output)</option>
-                <option value="google/gemini-2.5-pro-preview">Gemini 2.5 Pro Preview ($1.25/1M input, $10/1M output)</option>
-                <option value="google/gemini-2.0-flash-lite-001">Gemini 2.0 Flash Lite ($0.075/1M input, $0.30/1M output)</option>
-                <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash ($0.10/1M input, $0.40/1M output)</option>
-                <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Experimental (Free tier) ($0/1M input, $0/1M output)</option>
-                <option value="google/gemini-flash-1.5">Gemini 1.5 Flash ($0.075/1M input, $0.30/1M output)</option>
+                <option value="google/gemini-2.0-pro">Gemini 2.0 Pro ($0.50/1M input, $1.50/1M output)</option>
+                <option value="google/gemini-2.0-pro:thinking">Gemini 2.0 Pro Thinking ($0.50/1M input, $1.50/1M output)</option>
+                <option value="google/gemini-1.5-pro">Gemini 1.5 Pro ($3.50/1M input, $10.50/1M output)</option>
+                <option value="google/gemini-1.5-pro:thinking">Gemini 1.5 Pro Thinking ($3.50/1M input, $10.50/1M output)</option>
+                <option value="google/gemini-1.5-flash">Gemini 1.5 Flash ($0.35/1M input, $1.05/1M output)</option>
+                <option value="google/gemini-1.5-flash:thinking">Gemini 1.5 Flash Thinking ($0.35/1M input, $1.05/1M output)</option>
+                <option value="google/gemma-3-4b-it">Gemma 3 4B ($0.02/1M input, $0.04/1M output)</option>
+                <option value="google/gemma-3-4b-it:free">Gemma 3 4B (Free tier) ($0/1M input, $0/1M output)</option>
+                <option value="google/gemma-3-12b-it">Gemma 3 12B ($0.05/1M input, $0.10/1M output)</option>
+                <option value="google/gemma-3-12b-it:free">Gemma 3 12B (Free tier) ($0/1M input, $0/1M output)</option>
+                <option value="google/gemma-3-27b-it">Gemma 3 27B ($0.09/1M input, $0.17/1M output)</option>
+                <option value="google/gemma-3-27b-it:free">Gemma 3 27B (Free tier) ($0/1M input, $0/1M output)</option>
+                <option value="google/gemma-2-9b-it">Gemma 2 9B ($0.20/1M input/output)</option>
+                <option value="google/gemma-2-9b-it:free">Gemma 2 9B (Free tier) ($0/1M input/output)</option>
+                <option value="google/gemma-2-27b-it">Gemma 2 27B ($0.80/1M input/output)</option>
                 <option value="google/gemini-flash-1.5-8b">Gemini 1.5 Flash 8B ($0.038/1M input, $0.15/1M output)</option>
                 <option value="google/gemini-pro-1.5">Gemini 1.5 Pro ($1.25/1M input, $5/1M output)</option>
             </optgroup>
@@ -287,18 +296,7 @@
                 <option value="x-ai/grok-2-1212">Grok 2 1212 ($2/1M input, $10/1M output, 131K context)</option>
                 <option value="x-ai/grok-vision-beta">Grok Vision Beta ($5/1M input, $15/1M output, 8K context)</option>
             </optgroup>
-            <option value="google/gemma-3-4b-it">Gemma 3 4B ($0.02/1M input, $0.04/1M output)</option>
-                <option value="google/gemma-3-4b-it:free">Gemma 3 4B (Free tier) ($0/1M input, $0/1M output)</option>
-                <option value="google/gemma-3-12b-it">Gemma 3 12B ($0.05/1M input, $0.10/1M output)</option>
-                <option value="google/gemma-3-12b-it:free">Gemma 3 12B (Free tier) ($0/1M input, $0/1M output)</option>
-                <option value="google/gemma-3-27b-it">Gemma 3 27B ($0.09/1M input, $0.17/1M output)</option>
-                <option value="google/gemma-3-27b-it:free">Gemma 3 27B (Free tier) ($0/1M input, $0/1M output)</option>
-            </optgroup>
-            <optgroup label="Google Gemma 2">
-                <option value="google/gemma-2-9b-it">Gemma 2 9B ($0.20/1M input/output)</option>
-                <option value="google/gemma-2-9b-it:free">Gemma 2 9B (Free tier)</option>
-                <option value="google/gemma-2-27b-it">Gemma 2 27B ($0.80/1M input/output)</option>
-            </optgroup>
+
             <optgroup label="Meta">
                 <option value="meta-llama/llama-4-maverick:free">Llama 4 Maverick (Free) ($0/1M input, $0/1M output, 128K context)</option>
                 <option value="meta-llama/llama-4-maverick">Llama 4 Maverick ($0.15/1M input, $0.60/1M output, 1M context)</option>
