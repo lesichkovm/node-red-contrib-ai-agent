@@ -35,13 +35,13 @@ Your feedback and contributions are highly appreciated!
 
 Here's an example flow that tells a joke related to today's date using a custom tool:
 
-![Today's Joke Flow](/snapshots/todays-joke-flow.png?raw=true "Example flow showing the Today's Joke implementation")
+![Today's Joke Flow](https://raw.githubusercontent.com/lesichkovm/node-red-contrib-ai-agent/refs/heads/main/snapshots/todays-joke-flow.png "Example flow showing the Today's Joke implementation")
 
 ### Flow Output
 
 When executed, the flow will generate a joke related to the current date:
 
-![Today's Joke Output](/snapshots/todays-joke.png?raw=true "Example output showing a date-related joke")
+![Today's Joke Output](https://raw.githubusercontent.com/lesichkovm/node-red-contrib-ai-agent/refs/heads/main/snapshots/todays-joke.png "Example output showing a date-related joke")
 
 ## Basic Usage
 
