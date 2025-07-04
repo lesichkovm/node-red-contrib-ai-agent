@@ -1,0 +1,35 @@
+<script type="text/javascript">
+  RED.nodes.registerType('ai-agent', {
+    category: 'storage',
+    color: '#a6bbcf',
+    defaults: {
+      name: { value: '' },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'icon.svg',
+    label: function () {
+      return this.name || 'AI Agent'
+    },
+    oneditprepare: function () {},
+    oneditsave: function () {},
+    oneditresize: function (size) {},
+  })
+</script>
+
+<!-- START: Template -->
+<script type="text/x-red" data-template-name="ai-agent">
+    <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+      <input type="text" id="node-input-name">
+    </div>
+</script>
+<!-- END: Template -->
+
+<!-- START: Help -->
+<script type="text/x-red" data-help-name="ai-agent">
+  <p>
+    A "batteries included" AI Agent for Node-RED designed to be flexible, portable, and fun to use.
+  </p>
+</script>
+<!-- END: Help -->

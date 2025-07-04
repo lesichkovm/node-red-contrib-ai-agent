@@ -1,0 +1,36 @@
+{
+    "name": "node-red-contrib-ai-agent",
+    "version": "1.1.0",
+    "description": "AI Agent for Node-RED",
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:lesichkovm/node-red-contrib-ai-agent.git"
+    },
+    "keywords": [
+        "ai",
+        "agent",
+        "node-red",
+        "node-red-contrib",
+        "node-red-contrib-ai-agent"
+    ],
+    "main": "ai-agent.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Milan Lesichkov",
+    "maintainers": [
+        {
+            "name": "Milan Lesichkov",
+            "email": "lesichkovm@gmail.com"
+        }
+    ],
+    "license": "MIT",
+    "node-red": {
+        "nodes": {
+            "ai-agent": "ai-agent.js"
+        }
+    },
+    "dependencies": {
+        "knex": "^3.1.0"
+    }
+}
