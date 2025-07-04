@@ -7,7 +7,7 @@ module.exports = function (RED) {
     
     // Configuration
     this.agentName = config.name || 'AI Agent'
-    this.agentType = config.agentType || 'assistant'
+    this.systemPrompt = config.systemPrompt || 'You are a helpful AI assistant.'
     this.responseType = config.responseType || 'text'
     
     // Initialize agent state
@@ -16,23 +16,8 @@ module.exports = function (RED) {
       lastInteraction: null
     }
     
-    // Simple response templates based on agent type
-    this.responses = {
-      assistant: {
-        greeting: 'Hello! How can I assist you today?',
-        farewell: 'Goodbye! Have a great day!',
-        default: 'I understand you said: ',
-        help: 'I can help with general questions and tasks. Just let me know what you need!',
-        error: 'I apologize, but I encountered an error processing your request.'
-      },
-      chatbot: {
-        greeting: 'Hi there! What would you like to chat about?',
-        farewell: 'It was nice chatting with you!',
-        default: 'Interesting! Tell me more about ',
-        help: "I'm here to chat! Feel free to tell me about your day or ask me anything.",
-        error: "Hmm, I'm having trouble understanding that. Could you rephrase?"
-      }
-    }
+    // Default responses
+    this.defaultResponse = 'I understand you said: '
 
     // Handle node cleanup
     node.on('close', function (done) {
@@ -73,22 +58,15 @@ module.exports = function (RED) {
         
         let response;
         
-        // Handle different agent types
-        if (node.agentType === 'openrouter') {
-          
-          try {
-            // Use OpenRouter for AI responses
-            response = await generateAIResponse.call(node, inputText, msg.aiagent);
-          } catch (error) {
-            const errorMsg = error.response?.data?.error?.message || error.message;
-            node.status({fill:"red", shape:"ring", text:"API Error: " + (errorMsg || 'Unknown error').substring(0, 30)});
-            node.error('OpenRouter API Error: ' + errorMsg, msg);
-            if (done) done(error);
-            return;
-          }
-        } else {
-          // Use simple rule-based responses for assistant/chatbot
-          response = processInput(inputText, node.context, node.responses[node.agentType] || node.responses.assistant);
+        try {
+          // Use OpenRouter for AI responses
+          response = await generateAIResponse.call(node, inputText, msg.aiagent);
+        } catch (error) {
+          const errorMsg = error.response?.data?.error?.message || error.message;
+          node.status({fill:"red", shape:"ring", text:"API Error: " + (errorMsg || 'Unknown error').substring(0, 30)});
+          node.error('OpenRouter API Error: ' + errorMsg, msg);
+          if (done) done(error);
+          return;
         }
         
         // Update context with AI response
@@ -98,7 +76,7 @@ module.exports = function (RED) {
         if (node.responseType === 'object') {
           msg.payload = {
             agent: node.agentName,
-            type: node.agentType,
+            type: 'ai',
             input: input,
             response: response,
             timestamp: new Date().toISOString(),
@@ -137,9 +115,7 @@ module.exports = function (RED) {
       const messages = [
         {
           role: 'system',
-          content: node.agentType === 'assistant' ? 
-            'You are a helpful AI assistant.' : 
-            'You are a friendly and engaging chatbot.'
+          content: node.systemPrompt
         },
         {
           role: 'user',

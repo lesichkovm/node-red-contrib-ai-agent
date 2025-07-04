@@ -4,12 +4,9 @@
     color: '#a6bbcf',
     defaults: {
       name: { value: '' },
-      agentType: { 
-        value: 'assistant', 
-        required: true,
-        validate: function(val) {
-          return ['assistant', 'chatbot', 'openrouter'].includes(val);
-        }
+      systemPrompt: { 
+        value: 'You are a helpful AI assistant.',
+        required: true
       },
       responseType: { 
         value: 'text', 
@@ -27,17 +24,8 @@
     },
     paletteLabel: 'AI Agent',
     oneditprepare: function() {
-      // Show/hide settings based on agent type
-      $('#node-input-agentType').on('change', function() {
-        if ($(this).val() === 'openrouter') {
-          $('#openrouter-help').show();
-        } else {
-          $('#openrouter-help').hide();
-        }
-      });
-      
-      // Trigger change to set initial state
-      $('#node-input-agentType').trigger('change');
+      // Always show OpenRouter help since we only support OpenRouter now
+      $('#openrouter-help').show();
     }
   });
 </script>
@@ -50,12 +38,15 @@
   </div>
   
   <div class="form-row">
-    <label for="node-input-agentType"><i class="fa fa-robot"></i> Agent Type</label>
-    <select id="node-input-agentType" style="width: 100%;">
-      <option value="assistant">Assistant (Simple Rules)</option>
-      <option value="chatbot">Chatbot (Simple Rules)</option>
-      <option value="openrouter">OpenRouter (AI-Powered)</option>
-    </select>
+    <label for="node-input-systemPrompt"><i class="fa fa-comment"></i> System Prompt</label>
+    <textarea type="text" id="node-input-systemPrompt" placeholder="You are a helpful AI assistant." style="width: 100%; height: 80px; resize: vertical; font-family: monospace;"></textarea>
+  </div>
+  
+  <div class="form-row">
+    <label><i class="fa fa-robot"></i> AI Agent</label>
+    <div class="form-tips" style="width: 70%;">
+      <p>This node uses OpenRouter for AI responses. Connect an <b>AI Model</b> node to configure the model and API key.</p>
+    </div>
   </div>
   
   <div class="form-row">
