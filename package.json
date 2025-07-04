@@ -40,7 +40,8 @@
         "version": ">=1.0.0",
         "nodes": {
             "ai-agent": "./agent/ai-agent.js",
-            "ai-model": "./model/ai-model.js"
+            "ai-model": "./model/ai-model.js",
+            "ai-tool": "./tool/ai-tool.js"
         }
     }
 }

@@ -1,0 +1,152 @@
+<script type="text/javascript">
+    RED.nodes.registerType('ai-tool', {
+        category: 'AI Agent',
+        inputs: 1,
+        outputs: 1,
+        icon: 'tool/ai-tool-icon.svg',
+        paletteLabel: 'AI Tool',
+        label: function() {
+            return this.name || 'AI Tool';
+        },
+        color: '#a6bbcf',
+        defaults: {
+            name: { value: '' },
+            toolType: { value: 'http', required: true },
+            toolName: { value: '', required: true, validate: RED.validators.regex(/^[a-zA-Z0-9_-]+$/) },
+            description: { value: '', required: true },
+            httpMethod: { value: 'GET' },
+            httpUrl: { value: '' },
+            httpHeaders: { value: '{}', validate: RED.validators.json() },
+            httpBody: { value: '' },
+            functionCode: { value: '// Write your function here\n// Available variables: input, context, node\n// Return value will be passed to the next tool or as agent output\nreturn input;' },
+            nodeRedFlow: { value: 'flow' },
+            nodeRedNode: { value: '' },
+            nodeRedProperty: { value: 'payload' }
+        },
+        oneditprepare: function() {
+            // Show/hide fields based on tool type
+            $('#node-input-toolType').on('change', function() {
+                $('.tool-type-options').hide();
+                $(`#${this.value}-options`).show();
+            }).trigger('change');
+
+            // Initialize JSON editor for headers
+            const headersEditor = RED.editor.createEditor({
+                id: 'node-input-http-headers',
+                value: $('#node-input-http-headers').val() || '{}',
+                mode: 'application/json',
+                onComplete: function() {
+                    $('#node-input-http-headers').val(headersEditor.getText());
+                }
+            });
+        },
+        oneditsave: function() {
+            // Validate and format JSON before saving
+            try {
+                if (this.httpHeaders) {
+                    JSON.parse(this.httpHeaders);
+                }
+            } catch (e) {
+                    alert('Invalid JSON in Headers');
+                    return false;
+                }
+            return true;
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ai-tool">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-toolType">Tool Type</label>
+        <select id="node-input-toolType" style="width: 70%;">
+            <option value="http">HTTP Request</option>
+            <option value="function">JavaScript Function</option>
+            <option value="node-red">Node-RED Node</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-toolName">Tool Name</label>
+        <input type="text" id="node-input-toolName" placeholder="unique_tool_identifier" style="font-family: monospace;">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-description">Description</label>
+        <textarea id="node-input-description" rows="2" placeholder="What this tool does"></textarea>
+    </div>
+
+    <!-- HTTP Options -->
+    <div id="http-options" class="tool-type-options">
+        <div class="form-row">
+            <label for="node-input-httpMethod">Method</label>
+            <select id="node-input-httpMethod" style="width: 30%;">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="PATCH">PATCH</option>
+            </select>
+            <input type="text" id="node-input-httpUrl" placeholder="https://example.com/endpoint" style="width: 70%;">
+        </div>
+        
+        <div class="form-row">
+            <label for="node-input-httpHeaders">Headers (JSON)</label>
+            <div id="node-input-http-headers-editor" style="height: 100px; width: 100%;"></div>
+            <input type="hidden" id="node-input-http-headers">
+        </div>
+        
+        <div class="form-row">
+            <label for="node-input-httpBody">Body (for POST/PUT/PATCH)</label>
+            <textarea id="node-input-httpBody" rows="3" placeholder="Request body (leave empty for GET/DELETE)"></textarea>
+        </div>
+    </div>
+
+    <!-- Function Options -->
+    <div id="function-options" class="tool-type-options" style="display: none;">
+        <div class="form-row">
+            <label for="node-input-functionCode">Function Code</label>
+            <div style="height: 200px;">
+                <textarea id="node-input-functionCode" style="width: 100%; height: 100%; font-family: monospace;"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Node-RED Options -->
+    <div id="node-red-options" class="tool-type-options" style="display: none;">
+        <div class="form-row">
+            <label for="node-input-nodeRedFlow">Flow Context</label>
+            <select id="node-input-nodeRedFlow" style="width: 100%;">
+                <option value="flow">Current Flow</option>
+                <option value="global">Global</option>
+            </select>
+        </div>
+        
+        <div class="form-row">
+            <label for="node-input-nodeRedNode">Node ID</label>
+            <input type="text" id="node-input-nodeRedNode" placeholder="Node ID to call" style="width: 100%;">
+        </div>
+        
+        <div class="form-row">
+            <label for="node-input-nodeRedProperty">Property</label>
+            <input type="text" id="node-input-nodeRedProperty" value="payload" placeholder="Property to set (default: payload)" style="width: 100%;">
+        </div>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ai-tool">
+    <p>Configures a tool that can be used by the AI Agent.</p>
+    <p>Tools extend the capabilities of the AI Agent by allowing it to interact with external systems, perform calculations, or access Node-RED nodes.</p>
+    <h3>Tool Types</h3>
+    <ul>
+        <li><strong>HTTP Request</strong>: Call external APIs</li>
+        <li><strong>JavaScript Function</strong>: Define custom logic in JavaScript</li>
+        <li><strong>Node-RED Node</strong>: Interact with other nodes in your flow</li>
+    </ul>
+    <h3>Outputs</h3>
+    <p>Adds the tool definition to <code>msg.aiagent.tools</code> for use by the AI Agent node.</p>
+</script>
