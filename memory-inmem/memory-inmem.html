@@ -1,0 +1,67 @@
+<script type="text/javascript">
+    RED.nodes.registerType('ai-memory-inmem', {
+        category: 'AI Agent',
+        color: "#a6bbcf",
+        defaults: {
+            name: { value: "" },
+            maxItems: { 
+                value: 1000,
+                required: true,
+                validate: RED.validators.number()
+            }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-microchip",
+        label: function() {
+            return this.name || "AI Memory (In-Memory)";
+        },
+        labelStyle: function() {
+            return this.name ? "node_label_italic" : "";
+        },
+        oneditprepare: function() {
+            // Initialize any UI components here
+            $("#node-input-maxItems").spinner({
+                min: 1,
+                max: 100000
+            });
+        },
+        oneditsave: function() {
+            // Handle save if needed
+        },
+        oneditcancel: function() {
+            // Cleanup if needed
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ai-memory-inmem">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-maxItems"><i class="fa fa-database"></i> Max Items</label>
+        <input type="number" id="node-input-maxItems" min="1" max="100000" value="1000">
+    </div>
+    <div class="form-tips">
+        <p>Note: Memories will be lost when Node-RED restarts.</p>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ai-memory-inmem">
+    <p>Stores AI memories in memory (volatile).</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span>object|string</span></dt>
+        <dd>The message to store or retrieve from memory.</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span>object|string</span></dt>
+        <dd>The processed message with memory operations applied.</dd>
+    </dl>
+    <h3>Details</h3>
+    <p>This node stores memories in memory only. All data will be lost when Node-RED is restarted.</p>
+    <p>Use this for temporary storage or when persistence is not required.</p>
+</script>
