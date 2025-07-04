@@ -3,7 +3,7 @@
         category: 'AI Agent',
         inputs: 1,
         outputs: 1,
-        icon: 'tool/ai-tool-icon.svg',
+        icon: 'function.svg',
         paletteLabel: 'AI Tool',
         label: function() {
             return this.name || 'AI Tool';
@@ -16,7 +16,14 @@
             description: { value: '', required: true },
             httpMethod: { value: 'GET' },
             httpUrl: { value: '' },
-            httpHeaders: { value: '{}', validate: RED.validators.json() },
+            httpHeaders: { value: '{}', validate: function(v) {
+                try {
+                    JSON.parse(v);
+                    return true;
+                } catch(e) {
+                    return false;
+                }
+            }},
             httpBody: { value: '' },
             functionCode: { value: '// Write your function here\n// Available variables: input, context, node\n// Return value will be passed to the next tool or as agent output\nreturn input;' },
             nodeRedFlow: { value: 'flow' },

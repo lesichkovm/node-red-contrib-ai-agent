@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-ai-agent",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "AI Agent for Node-RED",
     "repository": {
         "type": "git",
@@ -25,6 +25,11 @@
         }
     ],
     "license": "AGPL-3.0",
+    "files": [
+        "agent/*",
+        "model/*",
+        "tool/*"
+    ],
     "dependencies": {
         "node-red": ">=1.0.0",
         "axios": "^1.6.0"

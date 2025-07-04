@@ -145,49 +145,6 @@ module.exports = function (RED) {
       
       return response.data.choices[0].message.content.trim();
     }
-    
-    // Simple input processing function
-    function processInput(input, context, responses) {
-      if (!input || input.trim() === '') {
-        return responses.help
-      }
-      
-      const inputLower = input.toLowerCase()
-      
-      // Check for common commands
-      if (inputLower.includes('hello') || inputLower.includes('hi') || inputLower.includes('hey')) {
-        return responses.greeting
-      }
-      
-      if (inputLower.includes('bye') || inputLower.includes('goodbye') || inputLower.includes('see you')) {
-        return responses.farewell
-      }
-      
-      if (inputLower.includes('help') || inputLower === '?') {
-        return responses.help
-      }
-      
-      // Simple response generation based on input
-      if (inputLower.includes('?')) {
-        // If it's a question, try to extract the main topic
-        const topic = extractTopic(input)
-        return `I'm not sure about "${topic}". Could you provide more details?`
-      }
-      
-      // Default response
-      return `${responses.default}"${input}"`
-    }
-    
-    // Helper function to extract topic from input
-    function extractTopic(input) {
-      // Simple implementation - can be enhanced with NLP later
-      const words = input.replace(/[^\w\s]/g, '').split(/\s+/)
-      const questionWords = ['what', 'who', 'where', 'when', 'why', 'how', 'which', 'can', 'could', 'would', 'is', 'are', 'do', 'does']
-      
-      // Find the first non-question word
-      const topicIndex = words.findIndex(word => !questionWords.includes(word.toLowerCase()))
-      return topicIndex !== -1 ? words[topicIndex] : 'that'
-    }
   }
 
   // Registering the node-red type
