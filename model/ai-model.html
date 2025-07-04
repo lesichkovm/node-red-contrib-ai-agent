@@ -8,7 +8,7 @@
         defaults: {
             name: { value: '' },
             model: {
-                value: 'openai/gpt-3.5-turbo',
+                value: '',
                 required: true,
                 validate: function(val) {
                     return val && val.length > 0;
@@ -34,22 +34,64 @@
         oneditprepare: function() {
             var node = this;
             
+            // Store the original values to detect changes
+            var originalValues = {
+                name: node.name || '',
+                model: node.model || '',
+                temperature: node.temperature || 0.7,
+                maxTokens: node.maxTokens || 1000,
+                apiKey: (this.credentials && this.credentials.apiKey) || ''
+            };
+            
             // Initialize temperature slider
             $('#node-config-input-temperature').on('input', function() {
                 $('#temperature-value').text($(this).val());
             });
             
             // Set initial values
-            $('#node-config-input-name').val(node.name);
-            $('#node-config-input-model').val(node.model);
-            $('#node-config-input-temperature').val(node.temperature);
-            $('#node-config-input-maxTokens').val(node.maxTokens);
-            $('#temperature-value').text(node.temperature);
+            $('#node-config-input-name').val(originalValues.name);
+            $('#node-config-input-model').val(originalValues.model);
+            $('#node-config-input-temperature').val(originalValues.temperature);
+            $('#node-config-input-maxTokens').val(originalValues.maxTokens);
+            $('#temperature-value').text(originalValues.temperature);
             
-            // Set the API key field value from credentials
-            if (node.credentials && node.credentials.apiKey) {
-                $('#node-config-input-credentials-apiKey').val(node.credentials.apiKey);
-            }
+            // Initialize credentials if they don't exist
+            this.credentials = this.credentials || {};
+            
+            // Always set the API key field value from credentials
+            // This ensures the existing key is preserved when opening the editor
+            const currentApiKey = (this.credentials && this.credentials.apiKey) || '';
+            $('#node-config-input-credentials-apiKey').val(currentApiKey);
+            
+            // Update the originalValues to include the current API key
+            originalValues.apiKey = currentApiKey;
+            
+            // Override the default close behavior to prevent marking as changed when no changes were made
+            var originalClose = RED.view.state.RED_view_state_close;
+            RED.view.state.RED_view_state_close = function() {
+                var currentValues = {
+                    name: $('#node-config-input-name').val(),
+                    model: $('#node-config-input-model').val(),
+                    temperature: parseFloat($('#node-config-input-temperature').val()),
+                    maxTokens: parseInt($('#node-config-input-maxTokens').val()),
+                    apiKey: $('#node-config-input-credentials-apiKey').val()
+                };
+                
+                var hasChanges = Object.keys(originalValues).some(function(key) {
+                    return originalValues[key] !== currentValues[key];
+                });
+                
+                if (!hasChanges) {
+                    // If no changes, prevent the dirty flag from being set
+                    RED.view.state.dirty = RED.view.state._dirty;
+                }
+                
+                // Call the original close function
+                originalClose.apply(this, arguments);
+                
+                // Restore the original close function
+                RED.view.state.RED_view_state_close = originalClose;
+            };
             
             // Add validation for required fields
             $('#node-config-dialog-form').on('submit', function(e) {
@@ -76,9 +118,15 @@
             this.temperature = parseFloat($('#node-config-input-temperature').val());
             this.maxTokens = parseInt($('#node-config-input-maxTokens').val());
             
-            // Ensure credentials are properly saved
+            // Always ensure credentials object exists
             this.credentials = this.credentials || {};
-            this.credentials.apiKey = $('#node-config-input-credentials-apiKey').val();
+            
+            // Only update the API key if the field is not empty
+            // This preserves the existing key if the field is left blank
+            var apiKey = $('#node-config-input-credentials-apiKey').val();
+            if (apiKey !== '') {
+                this.credentials.apiKey = apiKey;
+            }
         },
         
         oneditcancel: function() {
