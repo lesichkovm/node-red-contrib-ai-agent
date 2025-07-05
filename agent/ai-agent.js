@@ -1,5 +1,9 @@
 const axios = require('axios');
 
+/**
+ * Helper functions for AI Agent Node
+ */
+
 // Validate AI configuration
 function validateAIConfig(aiagent) {
   if (!aiagent) return 'AI configuration missing. Ensure an AI Model node is connected.';
@@ -8,7 +12,12 @@ function validateAIConfig(aiagent) {
   return null; // No errors
 }
 
-// Create a message object
+/**
+ * Creates and returns a message object
+ * @param {string} role - The role of the message (e.g., 'user', 'assistant', 'system')
+ * @param {string} content - The content of the message
+ * @returns {Object} - The message object
+ */
 function createMessage(role, content) {
   return {
     role: role,
@@ -18,7 +27,13 @@ function createMessage(role, content) {
   };
 }
 
-// Prepare the prompt with context if available
+/**
+ * Prepares the prompt with context if memory is available
+ * @param {Object} node - The AI Agent node
+ * @param {Object} msg - The input message
+ * @param {string} inputText - The input text
+ * @returns {Object} - The prepared prompt object
+ */
 function preparePrompt(node, msg, inputText) {
   const messages = [{ role: 'system', content: node.systemPrompt }];
   let userMessage = null;
@@ -46,7 +61,12 @@ function preparePrompt(node, msg, inputText) {
   return { messages, userMessage };
 }
 
-// Update conversation context with new messages
+/**
+ * Updates the conversation context with new messages
+ * @param {Object} msg - The input message
+ * @param {Object} userMessage - The user message
+ * @param {string} assistantResponse - The assistant response
+ */
 function updateContext(msg, userMessage, assistantResponse) {
   if (!msg.aimemory?.context) return;
   
@@ -57,44 +77,178 @@ function updateContext(msg, userMessage, assistantResponse) {
   msg.aimemory.context = newContext.slice(-maxItems);
 }
 
-// Format the AI response based on response type
-function formatResponse(node, msg, input, response) {
-  if (node.responseType === 'object') {
-    try {
-      return JSON.parse(response);
-    } catch (e) {
-      // If parsing fails, return as text
-      return response;
-    }
-  }
-  return response;
+/**
+ * Handles errors consistently
+ * @param {Object} node - The AI Agent node
+ * @param {Object} msg - The input message
+ * @param {Error} error - The error object
+ */
+function handleError(node, msg, error) {
+  const errorMsg = error.response?.data?.error?.message || error.message || 'Unknown error';
+  node.status({ fill: 'red', shape: 'ring', text: 'Error' });
+  node.error('AI Agent Error: ' + errorMsg, msg);
 }
 
-// Call the AI with proper error handling
+/**
+ * Formats tools for the OpenAI/OpenRouter API
+ * @param {Array} tools - Array of tool definitions
+ * @returns {Array} - Formatted tools for the API
+ */
+function formatToolsForAPI(tools) {
+  return tools.map(tool => {
+    const type = tool.type || 'function';
+    const fn = tool.function || {};
+    const name = fn.name || 'function';
+    const description = fn.description || 'function';
+    const parameters = fn.parameters || {};
+      return {
+        type: type,
+        function: {
+          name: name,
+          description: description,
+          parameters: parameters || {
+            type: 'object',
+            properties: {},
+            required: []
+          }
+        }
+      };
+    });
+}
+
+/**
+ * Calls the AI with proper error handling
+ * @param {Object} node - The AI Agent node
+ * @param {Object} aiConfig - The AI configuration object
+ * @param {Array} messages - The messages to send to the AI
+ * @returns {Promise<string>} - The AI response
+ */
 async function callAI(node, aiConfig, messages) {
+  const hasTools = aiConfig.tools && Array.isArray(aiConfig.tools) && aiConfig.tools.length > 0;
+  const tools = hasTools ? aiConfig.tools : [];
+  const toolChoice = hasTools ? 'auto' : 'none';
+
+  node.warn(`Calling ${aiConfig.model} with ${tools.length} tools and ${toolChoice} tool choice`);
+  
   try {
+    node.status({ fill: 'blue', shape: 'dot', text: `Calling ${aiConfig.model}...` });
+    
+    // Prepare request payload
+    const requestPayload = {
+      model: aiConfig.model,
+      temperature: aiConfig.temperature,
+      // max_tokens: aiConfig.maxTokens,
+      messages: messages,
+    };
+    
+    // Add tools if available
+    if (hasTools) {
+      node.warn('Adding tools: ' + JSON.stringify(tools, null, 2));
+      requestPayload.tools = formatToolsForAPI(tools);
+      requestPayload.tool_choice = toolChoice;
+    }
+
+    node.warn(JSON.stringify(requestPayload, null, 2));
+    
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
-      {
-        model: aiConfig.model,
-        messages: messages,
-      },
+      requestPayload,
       {
         headers: {
           'Authorization': `Bearer ${aiConfig.apiKey}`,
           'Content-Type': 'application/json',
-        },
+          'HTTP-Referer': 'https://nodered.org/',
+          'X-Title': 'Node-RED AI Agent'
+        }
       }
     );
     
-    return response.data.choices[0].message.content;
+    // Check if the response contains tool calls
+    const responseMessage = response.data.choices[0]?.message;
+
+    node.warn(JSON.stringify(responseMessage, null, 2));
+
+    if (responseMessage?.tool_calls && aiConfig.tools) {
+      // Process tool calls
+      if (node.warn) node.warn('Processing tool calls');
+      return await processToolCalls(node, responseMessage, aiConfig.tools, messages);
+    }
+
+    node.warn('Processing response');
+    return responseMessage?.content?.trim() || '';
+    
   } catch (error) {
-    const errorMsg = error.response?.data?.error?.message || error.message || 'Unknown error';
+    const errorMsg = error.response?.data?.error?.message || error.message;
     throw new Error(`AI API Error: ${errorMsg}`);
   }
 }
 
+/**
+ * Helper function to process tool calls from AI response
+ * @param {Object} node - The Node-RED node instance
+ * @param {Object} responseMessage - The AI response message containing tool calls
+ * @param {Array} tools - Array of available tools
+ * @param {Array} messages - Conversation messages
+ * @returns {Promise<string>} - Result of tool executions
+ */
+async function processToolCalls(node, responseMessage, tools, messages) {
+  try {
+    const toolCalls = responseMessage.tool_calls || [];
+    let toolResults = [];
+    if (node && node.warn) {
+      node.warn('Processing tool calls: ' + JSON.stringify(toolCalls, null, 2));
+    }
+    
+    // Process each tool call
+    for (const toolCall of toolCalls) {
+      const { id, function: fn } = toolCall;
+      const { name, arguments: args } = fn;
+      
+      // Find the matching tool
+      const tool = tools.find(t => t.function?.name === name);
+      if (!tool) {
+        toolResults.push({
+          tool_call_id: id,
+          role: 'tool',
+          name,
+          content: JSON.stringify({ error: `Tool '${name}' not found` })
+        });
+        continue;
+      }
+      
+      // Execute the tool
+      try {
+        const parsedArgs = typeof args === 'string' ? JSON.parse(args) : args;
+        const result = await tool.execute(parsedArgs);
+        
+        toolResults.push({
+          tool_call_id: id,
+          role: 'tool',
+          name,
+          content: typeof result === 'string' ? result : JSON.stringify(result)
+        });
+      } catch (error) {
+        toolResults.push({
+          tool_call_id: id,
+          role: 'tool',
+          name,
+          content: JSON.stringify({ error: error.message })
+        });
+      }
+    }
+    
+    // Return the tool results as a formatted string
+    return `Tool execution results:\n${JSON.stringify(toolResults, null, 2)}`;
+  } catch (error) {
+    return `Error processing tool calls: ${error.message}`;
+  }
+}
+
 module.exports = function (RED) {
+  /**
+   * AI Agent Node
+   * @param {Object} config - The node configuration object
+   */
   function AiAgentNode(config) {
     RED.nodes.createNode(this, config);
     const node = this;
@@ -128,8 +282,8 @@ module.exports = function (RED) {
         // 3. Prepare prompt with context
         const { messages, userMessage } = preparePrompt(node, msg, inputText);
         
-        // 4. Execute the prompt
-        const response = await executePrompt(node, msg.aiagent, messages);
+        // 4. Execute the prompt and get response
+        const response = await callAI(node, msg.aiagent, messages);
         
         // 5. Update context if using memory
         if (msg.aimemory && userMessage) {
@@ -137,22 +291,7 @@ module.exports = function (RED) {
         }
         
         // 6. Format and send response
-        msg.payload = formatResponse(node, msg, input, response);
-        send(msg);
-        
-        node.status({ fill: 'green', shape: 'dot', text: 'ready' });
-        
-      } catch (error) {
-        handleError(node, msg, error);
-      } finally {
-        if (done) done();
-      }
-    });
-    
-    // Format the response based on node configuration
-    function formatResponse(node, msg, input, response) {
-      if (node.responseType === 'object') {
-        return {
+        msg.payload = node.responseType === 'object' ? {
           agent: node.agentName,
           type: 'ai',
           input: input,
@@ -163,74 +302,17 @@ module.exports = function (RED) {
             lastInteraction: new Date().toISOString(),
             ...(msg.aimemory && { aimemory: msg.aimemory })
           }
-        };
-      }
-      return response;
-    }
-    
-    // Handle errors consistently
-    function handleError(node, msg, error) {
-      const errorMsg = error.response?.data?.error?.message || error.message || 'Unknown error';
-      node.status({ fill: 'red', shape: 'ring', text: 'Error' });
-      node.error('AI Agent Error: ' + errorMsg, msg);
-    }
-    
-    // Execute the prompt using the AI (thin wrapper for consistency)
-    async function executePrompt(node, aiConfig, messages) {
-      return callAI(node, aiConfig, messages);
-    }
-    
-    // Update conversation context with new messages
-    function updateContext(msg, userMessage, assistantResponse) {
-      if (!msg.aimemory?.context) return;
-      
-      const assistantMessage = createMessage('assistant', assistantResponse);
-      const newContext = [...msg.aimemory.context, userMessage, assistantMessage];
-      const maxItems = msg.aimemory.maxItems || 1000;
-      
-      msg.aimemory.context = newContext.slice(-maxItems);
-    }
-    
-    // Create a message object
-    function createMessage(role, content) {
-      return {
-        role: role,
-        content: content,
-        timestamp: new Date().toISOString(),
-        type: 'conversation'
-      };
-    }
-    
-    // Call the AI with proper error handling
-    async function callAI(node, aiConfig, messages) {
-      try {
-        node.status({ fill: 'blue', shape: 'dot', text: `Calling ${aiConfig.model}...` });
+        } : response;
         
-        const response = await axios.post(
-          'https://openrouter.ai/api/v1/chat/completions',
-          {
-            model: aiConfig.model,
-            messages: messages,
-            temperature: 0.7,
-            max_tokens: 1000
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${aiConfig.apiKey}`,
-              'Content-Type': 'application/json',
-              'HTTP-Referer': 'https://nodered.org/',
-              'X-Title': 'Node-RED AI Agent'
-            }
-          }
-        );
-        
-        return response.data.choices[0]?.message?.content?.trim() || '';
+        send(msg);
+        node.status({ fill: 'green', shape: 'dot', text: 'ready' });
         
       } catch (error) {
-        const errorMsg = error.response?.data?.error?.message || error.message;
-        throw new Error(`AI API Error: ${errorMsg}`);
+        handleError(node, msg, error);
+      } finally {
+        if (done) done();
       }
-    }
+    });
   }
 
   // Register the node type

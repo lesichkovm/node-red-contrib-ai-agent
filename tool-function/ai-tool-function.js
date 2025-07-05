@@ -12,8 +12,21 @@ module.exports = function(RED) {
         
         // Create a safe function that can be called later
         try {
+            // Ensure the function code is properly formatted
+            let functionCode = config.functionCode || 'return input;';
+            
+            // Check if the function code already returns a value
+            if (!functionCode.trim().startsWith('return') && !functionCode.includes('return ')) {
+                functionCode = `return (${functionCode});`;
+            }
+            
+            // Create the function with proper error handling
             node.fn = new Function('input', 'context', 'node', 
-                `try { ${config.functionCode || 'return input;'} } catch(e) { return { error: e.message }; }`
+                `try { 
+                    ${functionCode} 
+                } catch(e) { 
+                    return { error: e.message }; 
+                }`
             );
         } catch (e) {
             node.error(`Error creating function: ${e.message}`);
@@ -30,11 +43,19 @@ module.exports = function(RED) {
                 newMsg.aiagent = newMsg.aiagent || {};
                 newMsg.aiagent.tools = newMsg.aiagent.tools || [];
                 
-                // Create tool definition
+                // Create tool definition according to OpenAI API format
                 const toolDef = {
-                    name: node.toolName,
-                    description: node.description,
                     type: 'function',
+                    function: {
+                        name: node.toolName,
+                        description: node.description,
+                        parameters: {
+                            type: 'object',
+                            properties: {},
+                            required: []
+                        }
+                    },
+                    // Add execute method for our internal use
                     execute: (input, context) => executeFunctionTool(node.fn, input, context, node)
                 };
                 
