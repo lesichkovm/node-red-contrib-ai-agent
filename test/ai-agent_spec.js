@@ -348,14 +348,24 @@ describe("AI Agent Node", function () {
   it("should handle tool calls from AI response", function (done) {
     // Create a mock tool with a spy on its execute method
     const mockTool = {
-      name: "testTool",
-      description: "A test tool",
+      type: 'function',
+      function: {
+        name: "testTool",
+        description: "A test tool",
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        }
+      },
       execute: sinon.stub().resolves("Tool executed successfully")
     };
 
-    // Create a stub for axios.post that returns a tool call
+    // Create a stub for axios.post that returns a tool call first, then returns a response with content
     const axiosStub = sinon.stub(axios, "post");
-    axiosStub.resolves({
+    
+    // First call returns a response with tool calls
+    axiosStub.onFirstCall().resolves({
       data: {
         choices: [
           {
@@ -363,12 +373,26 @@ describe("AI Agent Node", function () {
               content: null,
               tool_calls: [
                 {
+                  id: "call_123",
                   function: {
                     name: "testTool",
                     arguments: JSON.stringify({ param1: "value1" })
                   }
                 }
               ]
+            }
+          }
+        ]
+      }
+    });
+    
+    // Second call returns a response with content after tool execution
+    axiosStub.onSecondCall().resolves({
+      data: {
+        choices: [
+          {
+            message: {
+              content: "Tool executed successfully"
             }
           }
         ]
@@ -392,13 +416,15 @@ describe("AI Agent Node", function () {
 
       output.on("input", function (msg) {
         try {
-          // Check that tool execution results are in the payload
-          expect(msg.payload).to.include("Tool execution results");
-          expect(msg.payload).to.include("Tool executed successfully");
+          // Check that the AI response is in the payload
+          expect(msg.payload).to.equal("Tool executed successfully");
           
           // Verify the tool was executed with the correct arguments
           expect(mockTool.execute).to.have.been.calledOnce;
           expect(mockTool.execute).to.have.been.calledWith({ param1: "value1" });
+          
+          // Verify axios was called twice (once for tool call, once for result)
+          expect(axiosStub).to.have.been.calledTwice;
           
           done();
         } catch (err) {

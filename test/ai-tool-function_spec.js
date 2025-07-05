@@ -61,8 +61,8 @@ describe("AI Tool Function Node", function () {
                     try {
                         expect(msg.aiagent.tools).to.be.an("array").with.lengthOf(1);
                         const tool = msg.aiagent.tools[0];
-                        expect(tool.name).to.equal("calculate_sum");
-                        expect(tool.description).to.equal("Calculates sum of two numbers");
+                        expect(tool.function.name).to.equal("calculate_sum");
+                        expect(tool.function.description).to.equal("Calculates sum of two numbers");
                         expect(tool.type).to.equal("function");
                         expect(tool.execute).to.be.a("function");
                         done();
@@ -94,8 +94,8 @@ describe("AI Tool Function Node", function () {
                     try {
                         expect(msg.aiagent.tools).to.be.an("array").with.lengthOf(1);
                         const tool = msg.aiagent.tools[0];
-                        expect(tool.name).to.include("function_"); // Should include default name with timestamp
-                        expect(tool.description).to.equal("JavaScript function tool");
+                        expect(tool.function.name).to.include("function_"); // Should include default name with timestamp
+                        expect(tool.function.description).to.equal("JavaScript function tool");
                         expect(tool.type).to.equal("function");
                         expect(tool.execute).to.be.a("function");
                         done();
