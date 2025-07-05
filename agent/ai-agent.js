@@ -171,7 +171,7 @@ async function callAI(node, aiConfig, messages) {
     if (responseMessage?.tool_calls && aiConfig.tools) {
       // Process tool calls
       if (node.warn) node.warn('Processing tool calls');
-      return await processToolCalls(node, responseMessage, aiConfig.tools, messages);
+      return await processToolCalls(node, responseMessage, aiConfig.tools, messages, aiConfig);
     }
 
     node.warn('Processing response');
@@ -191,7 +191,7 @@ async function callAI(node, aiConfig, messages) {
  * @param {Array} messages - Conversation messages
  * @returns {Promise<string>} - Result of tool executions
  */
-async function processToolCalls(node, responseMessage, tools, messages) {
+async function processToolCalls(node, responseMessage, tools, messages, aiConfig) {
   try {
     const toolCalls = responseMessage.tool_calls || [];
     let toolResults = [];
@@ -237,8 +237,14 @@ async function processToolCalls(node, responseMessage, tools, messages) {
       }
     }
     
-    // Return the tool results as a formatted string
-    return `Tool execution results:\n${JSON.stringify(toolResults, null, 2)}`;
+    // Add tool results to the messages array
+    const updatedMessages = [...messages, responseMessage, ...toolResults];
+    
+    // Make a new API call to let the AI process the tool results
+    const aiResponse = await callAI(node, { ...aiConfig, tools: null }, updatedMessages);
+    
+    // Return the final AI response
+    return aiResponse;
   } catch (error) {
     return `Error processing tool calls: ${error.message}`;
   }
