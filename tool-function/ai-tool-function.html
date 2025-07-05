@@ -1,0 +1,65 @@
+<script type="text/javascript">
+    RED.nodes.registerType('ai-tool-function', {
+        category: 'AI Agent',
+        inputs: 1,
+        outputs: 1,
+        icon: 'function.svg',
+        paletteLabel: 'AI Tool (Function)',
+        label: function() {
+            return this.name || 'AI Tool (Function)';
+        },
+        color: '#a6bbcf',
+        defaults: {
+            name: { value: '' },
+            toolName: { value: '', required: true, validate: RED.validators.regex(/^[a-zA-Z0-9_-]+$/) },
+            description: { value: '', required: true },
+            functionCode: { value: '// Write your function here\n// Available variables: input, context, node\n// Return value will be passed to the next tool or as agent output\nreturn input;' }
+        },
+        oneditprepare: function() {
+            // Function editor setup could be added here if needed
+        },
+        oneditsave: function() {
+            return true;
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ai-tool-function">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-toolName">Tool Name</label>
+        <input type="text" id="node-input-toolName" placeholder="unique_tool_identifier" style="font-family: monospace;">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-description">Description</label>
+        <textarea id="node-input-description" rows="2" placeholder="What this tool does"></textarea>
+    </div>
+
+    <!-- Function Options -->
+    <div class="form-row">
+        <label for="node-input-functionCode">Function Code</label>
+        <div style="height: 200px;">
+            <textarea id="node-input-functionCode" style="width: 100%; height: 100%; font-family: monospace;"></textarea>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ai-tool-function">
+    <p>Configures a function tool that can be used by the AI Agent.</p>
+    <p>Function tools extend the capabilities of the AI Agent by allowing it to execute custom JavaScript code.</p>
+    <h3>Function Tool</h3>
+    <p>Define custom logic in JavaScript that will be executed when the AI Agent calls this tool.</p>
+    <p>Your function has access to:</p>
+    <ul>
+        <li><code>input</code>: The data passed to the tool by the AI Agent</li>
+        <li><code>context</code>: The context object from the AI Agent</li>
+        <li><code>node</code>: The Node-RED node object</li>
+    </ul>
+    <h3>Outputs</h3>
+    <p>Adds the function tool definition to <code>msg.aiagent.tools</code> for use by the AI Agent node.</p>
+</script>
