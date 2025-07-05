@@ -31,9 +31,12 @@ Your feedback and contributions are highly appreciated!
 
 1. Install the package via the Node-RED palette manager
 2. Add an AI Model node to configure your OpenRouter API key and model
-3. Add a Memory node (In-Memory or File-based) to manage conversation context
-4. Connect to an AI Agent node to process messages with memory
-5. (Optional) Add AI Tool nodes to define custom functions
+3. (Optional) Add a Memory node (In-Memory or File-based) to manage conversation context
+4. (Optional) Add AI Tool nodes to define custom functions or HTTP requests
+5. Connect to an AI Agent node to process messages
+6. (Optional) Connect more AI Agent nodes to process messages in a chain
+
+##
 
 ## Node Types
 
@@ -68,6 +71,32 @@ Configures the AI model and API settings.
 - **API Key**: Your OpenRouter API key
 - **Name**: Display name for the node
 
+### AI Tool Function
+Creates a JavaScript function tool that can be used by the AI Agent.
+
+**Properties:**
+- **Name**: Display name for the node
+- **Tool Name**: Name of the tool (used by the AI to identify the tool)
+- **Description**: Description of what the tool does
+- **Function**: JavaScript code to execute when the tool is called
+
+### AI Tool HTTP
+Creates an HTTP request tool that can be used by the AI Agent to make external API calls.
+
+**Properties:**
+- **Name**: Display name for the node
+- **Tool Name**: Name of the tool (used by the AI to identify the tool)
+- **Description**: Description of what the tool does
+- **Method**: HTTP method (GET, POST, PUT, DELETE, etc.)
+- **URL**: The URL to make the request to (supports template variables)
+- **Headers**: JSON object of headers to include in the request
+- **Body**: Content to send in the request body
+
+**Template Variables:**
+You can use template variables in the URL, headers, and body to reference properties from the input object that the AI provides when calling the tool.
+
+Example: `https://api.example.com/users/${input.userId}`
+
 ## Example: Basic Usage
 
 Here's how to use the AI Agent:
@@ -75,9 +104,29 @@ Here's how to use the AI Agent:
 1. Add an AI Agent node to your flow
 2. Configure it with an AI Model node
 3. (Optional) Add a Memory configuration node if you need conversation context
-4. Connect your flow: `[Input] --> [AI Agent] --> [Output]`
+4. Connect your flow: `[Input] --> [AI Model] --> [AI Agent] --> [Output]`
 
 Memory is only required if you need to maintain conversation context between messages or chain multiple agents together. For simple, stateless interactions, you can use the AI Agent without any memory configuration.
+
+## Example: Using AI Tools
+
+To extend the AI Agent with custom tools:
+
+1. Add an AI Tool Function or AI Tool HTTP node to your flow
+2. Configure the tool with appropriate settings
+3. Connect the tool to the AI Agent: `[Input] --> [AI Model] --> [AI Tool] --> [AI Agent] --> [Output]`
+
+The AI Agent will automatically detect and use the tools in its processing. You can add multiple tools to give the AI Agent different capabilities.
+
+### HTTP Tool Example
+
+```
+[AI Tool HTTP] --> |
+                     |--> [AI Agent] --> [Output]
+[AI Tool Function] --> |
+```
+
+In this example, the AI Agent has access to both an HTTP tool for making external API calls and a function tool for custom logic.
 
 ## Example: Chained Agents
 
@@ -86,7 +135,7 @@ For more complex scenarios, you can chain multiple agents to process messages in
 1. Create Memory node (it will init the context, it will be shared between agents)
 2. Configure Agent 1
 3. Configure Agent 2
-4. Connect your flow: `[Input] --> [Memory Config] --> [Agent 1] --> [Agent 2] --> [Output]`
+4. Connect your flow: `[Input] --> [AI Model] --> [AI Memory] --> [Agent 1] --> [Agent 2] --> [Output]`
 
 Each agent will maintain its own conversation context based on its memory configuration.
 
@@ -114,19 +163,20 @@ Each agent will maintain its own conversation context based on its memory config
 
 ## Advanced: Chaining Agents
 
-You can chain multiple AI Agents with different memory scopes:
+You can chain multiple AI Agents with different memory scopes to create complex conversation flows:
 
 ```
-[Input] --> [Agent 1] --> [Memory 1] --> [Agent 2] --> [Memory 2] --> [Output]
+[Input] -->[Memory 1] --> [Agent 1] --> [Agent 2] --> [Memory 2] --> [Agent 3] --> [Agent 4] --> [Output]
 ```
 
 This allows for complex conversation flows where different agents handle different aspects of the interaction.
 
 ## Advanced Features
 
-- **Tool Integration**: Extend functionality with custom tools
+- **Tool Integration**: Extend functionality with custom tools (Function and HTTP)
 - **Context Management**: Maintain conversation history
 - **Flexible Configuration**: Customize model parameters and behavior
+- **Template Variables**: Use dynamic values in HTTP requests
 
 ## Contributing
 
