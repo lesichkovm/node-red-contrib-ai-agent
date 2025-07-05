@@ -29,21 +29,24 @@
         "agent/*",
         "model/*",
         "tool/*",
+        "tool-function/*",
+        "tool-http/*",
         "memory-file/*",
         "memory-inmem/*"
     ],
     "dependencies": {
-        "node-red": ">=1.0.0",
-        "axios": "^1.6.0"
+        "axios": "^1.6.0",
+        "node-red": ">=1.0.0"
     },
     "devDependencies": {
-        "eslint": "^8.0.0",
-        "prettier": "^3.0.0",
-        "mocha": "^10.0.0",
         "chai": "^4.3.0",
+        "eslint": "^8.0.0",
+        "mocha": "^10.0.0",
+        "node-red-node-test-helper": "^0.3.0",
+        "prettier": "^3.0.0",
+        "proxyquire": "^2.1.3",
         "sinon": "^15.0.0",
-        "sinon-chai": "^3.7.0",
-        "node-red-node-test-helper": "^0.3.0"
+        "sinon-chai": "^3.7.0"
     },
     "engines": {
         "node": ">=14.0.0"
@@ -55,6 +58,7 @@
             "ai-model": "./model/ai-model.js",
             "ai-tool": "./tool/ai-tool.js",
             "ai-tool-function": "./tool-function/ai-tool-function.js",
+            "ai-tool-http": "./tool-http/ai-tool-http.js",
             "ai-memory-file": "./memory-file/memory-file.js",
             "ai-memory-inmem": "./memory-inmem/memory-inmem.js"
         }

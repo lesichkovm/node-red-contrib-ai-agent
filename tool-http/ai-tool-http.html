@@ -1,0 +1,174 @@
+<!-- AI Tool HTTP Node -->
+<script type="text/javascript">
+    RED.nodes.registerType('ai-tool-http', {
+        category: 'AI Agent',
+        color: '#a6bbcf',
+        defaults: {
+            name: { value: "" },
+            toolName: { value: "", required: true },
+            description: { value: "HTTP request tool" },
+            httpMethod: { value: "GET" },
+            httpUrl: { value: "", required: true },
+            httpHeaders: { value: "{}" },
+            httpBody: { value: "" }
+        },
+        inputs: 1,
+        outputs: 2,
+        outputLabels: ["success", "error"],
+        icon: "font-awesome/fa-globe",
+        label: function() {
+            return this.name || "HTTP Tool";
+        },
+        paletteLabel: "AI HTTP Tool",
+        oneditprepare: function() {
+            // Initialize the ACE editor for JSON headers
+            const headersEditor = RED.editor.createEditor({
+                id: 'node-input-headers-editor',
+                mode: 'ace/mode/json',
+                value: this.httpHeaders || '{}'
+            });
+            
+            // Initialize the ACE editor for the body
+            const bodyEditor = RED.editor.createEditor({
+                id: 'node-input-body-editor',
+                mode: 'ace/mode/text',
+                value: this.httpBody || ''
+            });
+            
+            // Handle resizing
+            function resizeEditors() {
+                const rows = $('#dialog-form>div:not(.node-text-editor-row)');
+                let height = $('#dialog-form').height();
+                
+                for (let i=0; i<rows.length; i++) {
+                    height -= $(rows[i]).outerHeight(true);
+                }
+                
+                const editorRow = $('#dialog-form>div.node-text-editor-row');
+                height -= (parseInt(editorRow.css("marginTop"))+parseInt(editorRow.css("marginBottom")));
+                
+                // Split the height between the two editors
+                const headersHeight = Math.floor(height/2);
+                const bodyHeight = height - headersHeight - 30; // 30px for the label between them
+                
+                $('#node-input-headers-editor').css("height", headersHeight + "px");
+                headersEditor.resize();
+                
+                $('#node-input-body-editor').css("height", bodyHeight + "px");
+                bodyEditor.resize();
+            }
+            
+            $('#dialog-form').css("min-width", "500px").css("min-height", "400px");
+            
+            // Do the resize after a delay to allow the dialog to be fully rendered
+            setTimeout(resizeEditors, 10);
+            
+            // Handle form submission
+            $('#node-input-dialog-ok').on('click', () => {
+                this.httpHeaders = headersEditor.getValue();
+                this.httpBody = bodyEditor.getValue();
+            });
+            
+            // Handle editor cleanup
+            this.editor = {
+                destroy: function() {
+                    headersEditor.destroy();
+                    bodyEditor.destroy();
+                }
+            };
+        },
+        oneditsave: function() {
+            // The values are already saved in oneditprepare
+        },
+        oneditcancel: function() {
+            // Clean up the editors
+            if (this.editor) {
+                this.editor.destroy();
+            }
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ai-tool-http">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-toolName"><i class="fa fa-wrench"></i> Tool Name</label>
+        <input type="text" id="node-input-toolName" placeholder="http_request">
+    </div>
+    <div class="form-row">
+        <label for="node-input-description"><i class="fa fa-info-circle"></i> Description</label>
+        <input type="text" id="node-input-description" placeholder="HTTP request tool">
+    </div>
+    <div class="form-row">
+        <label for="node-input-httpMethod"><i class="fa fa-exchange"></i> Method</label>
+        <select id="node-input-httpMethod">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+            <option value="PATCH">PATCH</option>
+            <option value="HEAD">HEAD</option>
+            <option value="OPTIONS">OPTIONS</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-httpUrl"><i class="fa fa-globe"></i> URL</label>
+        <input type="text" id="node-input-httpUrl" placeholder="https://api.example.com/endpoint">
+    </div>
+    <div class="form-row">
+        <label for="node-input-headers-editor"><i class="fa fa-list"></i> Headers (JSON)</label>
+        <div style="height: 150px; min-height: 150px;" class="node-text-editor" id="node-input-headers-editor"></div>
+        <input type="hidden" id="node-input-httpHeaders">
+    </div>
+    <div class="form-row">
+        <label for="node-input-body-editor"><i class="fa fa-file-text-o"></i> Body</label>
+        <div style="height: 150px; min-height: 150px;" class="node-text-editor" id="node-input-body-editor"></div>
+        <input type="hidden" id="node-input-httpBody">
+    </div>
+    <div class="form-tips">
+        <p>Use <code>${input.property}</code> syntax to reference input properties in URL, headers, and body.</p>
+        <p>Example: <code>https://api.example.com/users/${input.userId}</code></p>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ai-tool-http">
+    <p>Creates an HTTP request tool for AI Agent.</p>
+    
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>The input message payload.</dd>
+    </dl>
+    
+    <h3>Outputs</h3>
+    <ol class="node-ports">
+        <li>Standard output
+            <dl class="message-properties">
+                <dt>payload <span class="property-type">object</span></dt>
+                <dd>The original payload.</dd>
+                <dt>aiagent.tools <span class="property-type">array</span></dt>
+                <dd>Array containing the HTTP tool definition.</dd>
+            </dl>
+        </li>
+        <li>Error output
+            <dl class="message-properties">
+                <dt>error <span class="property-type">object</span></dt>
+                <dd>Error information if the node fails.</dd>
+            </dl>
+        </li>
+    </ol>
+    
+    <h3>Details</h3>
+    <p>This node creates an HTTP request tool that can be used by the AI Agent node to make HTTP requests.</p>
+    <p>The tool can be configured with a method, URL, headers, and body.</p>
+    <p>You can use template variables in the URL, headers, and body to reference properties from the input object that the AI provides when calling the tool.</p>
+    <p>Example: <code>https://api.example.com/users/${input.userId}</code></p>
+    
+    <h3>References</h3>
+    <ul>
+        <li><a href="https://github.com/lesichkovm/node-red-contrib-ai-agent" target="_blank">GitHub</a> - the nodes github repository</li>
+    </ul>
+</script>
