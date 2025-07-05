@@ -36,6 +36,18 @@ Your feedback and contributions are highly appreciated!
 5. Connect to an AI Agent node to process messages
 6. (Optional) Connect more AI Agent nodes to process messages in a chain
 
+## Example: Today's Joke
+
+Here's an example flow that tells a joke related to today's date using a custom tool:
+
+![Today's Joke Flow](https://raw.githubusercontent.com/lesichkovm/node-red-contrib-ai-agent/refs/heads/main/snapshots/todays-joke-flow.png "Example flow showing the Today's Joke implementation")
+
+### Flow Output
+
+When executed, the flow will generate a joke related to the current date:
+
+![Today's Joke Output](https://raw.githubusercontent.com/lesichkovm/node-red-contrib-ai-agent/refs/heads/main/snapshots/todays-joke.png "Example output showing a date-related joke")
+
 ##
 
 ## Node Types
@@ -127,6 +139,8 @@ The AI Agent will automatically detect and use the tools in its processing. You 
 ```
 
 In this example, the AI Agent has access to both an HTTP tool for making external API calls and a function tool for custom logic.
+
+
 
 ## Example: Chained Agents
 

@@ -186,14 +186,18 @@ If the AI Agent node receives a message without the required `aiagent` configura
 2. **Invalid Configuration**: Verify that the AI Model node has all required fields (model, API key)
 3. **API Connection Issues**: Check network connectivity and API key validity
 
-## Using the AI Tool Node
+## Using AI Tool Nodes
 
-The AI Tool node allows you to extend the AI Agent's capabilities by adding custom tools. Here's a simple example of creating a tool to get today's date:
+AI Tool nodes allow you to extend the AI Agent's capabilities by adding custom tools. There are two types of AI Tool nodes:
 
-### Example: Get Today's Date Tool
+1. **AI Tool Function**: Create custom JavaScript functions that the AI can call
+2. **AI Tool HTTP**: Create HTTP request tools that the AI can use to interact with external APIs
 
-1. **Add an AI Tool Node** to your flow and configure it as follows:
-   - **Tool Type**: JavaScript Function
+Here are examples of how to use each type:
+
+### Example 1: AI Tool Function - Get Today's Date
+
+1. **Add an AI Tool Function Node** to your flow and configure it as follows:
    - **Tool Name**: `get_todays_date`
    - **Description**: `Returns the current date in ISO format`
    - **Function Code**:
@@ -204,7 +208,7 @@ The AI Tool node allows you to extend the AI Agent's capabilities by adding cust
 
 2. **Connect the nodes** in this order:
    ```
-   [inject] --> [AI Model] --> [AI Tool] --> [AI Agent] --> [debug]
+   [inject] --> [AI Model] --> [AI Tool Function] --> [AI Agent] --> [debug]
    ```
 
 3. **Configure the AI Agent** to use tools by setting a system prompt like:
@@ -217,7 +221,38 @@ The AI Tool node allows you to extend the AI Agent's capabilities by adding cust
 
 The AI Agent will automatically detect that it should use the `get_todays_date` tool and return the current date.
 
-### Example Flow JSON
+### Example 2: AI Tool HTTP - Weather API
+
+1. **Add an AI Tool HTTP Node** to your flow and configure it as follows:
+   - **Tool Name**: `get_weather`
+   - **Description**: `Gets the current weather for a location`
+   - **Method**: `GET`
+   - **URL**: `https://api.weatherapi.com/v1/current.json?key=YOUR_API_KEY&q=${input.location}`
+   - **Headers**: 
+     ```json
+     {
+       "Content-Type": "application/json"
+     }
+     ```
+
+2. **Connect the nodes** in this order:
+   ```
+   [inject] --> [AI Model] --> [AI Tool HTTP] --> [AI Agent] --> [debug]
+   ```
+
+3. **Configure the AI Agent** to use tools by setting a system prompt like:
+   ```
+   You are a helpful assistant with access to tools. 
+   When the user asks about the weather, use the get_weather tool and provide the location as input.
+   ```
+
+4. **Test the flow** by sending a message like "What's the weather like in London?"
+
+The AI Agent will detect that it should use the `get_weather` tool, extract "London" as the location parameter, and make an HTTP request to the weather API. The template variable `${input.location}` will be replaced with "London" in the URL.
+
+> **Note**: Template variables can be used in the URL, headers, and body of HTTP requests. They reference properties from the input object that the AI provides when calling the tool.
+
+### Example Flow JSON: Function Tool
 
 ```json
 [
@@ -259,15 +294,14 @@ The AI Agent will automatically detect that it should use the `get_todays_date` 
         "x": 350,
         "y": 100,
         "wires": [
-            ["ai-tool-node-id"]
+            ["ai-tool-function-node-id"]
         ]
     },
     {
-        "id": "ai-tool-node-id",
-        "type": "ai-tool",
+        "id": "ai-tool-function-node-id",
+        "type": "ai-tool-function",
         "z": "flow-id",
         "name": "Date Tool",
-        "toolType": "function",
         "toolName": "get_todays_date",
         "description": "Returns the current date in ISO format",
         "functionCode": "// Return today's date in ISO format (YYYY-MM-DD)\nreturn new Date().toISOString().split('T')[0];",
@@ -310,11 +344,135 @@ The AI Agent will automatically detect that it should use the `get_todays_date` 
 ]
 ```
 
+### Example Flow JSON: HTTP Tool
+
+```json
+[
+    {
+        "id": "inject-node-id",
+        "type": "inject",
+        "z": "flow-id",
+        "name": "Trigger",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "What's the weather like in London?",
+        "payloadType": "str",
+        "x": 150,
+        "y": 100,
+        "wires": [
+            ["ai-model-node-id"]
+        ]
+    },
+    {
+        "id": "ai-model-node-id",
+        "type": "ai-model",
+        "z": "flow-id",
+        "name": "GPT-4",
+        "model": "openai/gpt-4",
+        "temperature": 0.7,
+        "maxTokens": 1000,
+        "x": 350,
+        "y": 100,
+        "wires": [
+            ["ai-tool-http-node-id"]
+        ]
+    },
+    {
+        "id": "ai-tool-http-node-id",
+        "type": "ai-tool-http",
+        "z": "flow-id",
+        "name": "Weather API",
+        "toolName": "get_weather",
+        "description": "Gets the current weather for a location",
+        "method": "GET",
+        "url": "https://api.weatherapi.com/v1/current.json?key=YOUR_API_KEY&q=${input.location}",
+        "headers": "{\n  \"Content-Type\": \"application/json\"\n}",
+        "body": "",
+        "x": 550,
+        "y": 100,
+        "wires": [
+            ["ai-agent-node-id"]
+        ]
+    },
+    {
+        "id": "ai-agent-node-id",
+        "type": "ai-agent",
+        "z": "flow-id",
+        "name": "Assistant",
+        "systemPrompt": "You are a helpful assistant with access to tools. When the user asks about the weather, use the get_weather tool and provide the location as input.",
+        "responseType": "text",
+        "x": 750,
+        "y": 100,
+        "wires": [
+            ["debug-node-id"]
+        ]
+    },
+    {
+        "id": "debug-node-id",
+        "type": "debug",
+        "z": "flow-id",
+        "name": "Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 950,
+        "y": 100,
+        "wires": []
+    }
+]
+```
+
 ## Configuration Tips
 
 - **AI Model Node**: Configure your preferred model and settings
-- **AI Tool Node**: Create custom tools with JavaScript functions or HTTP endpoints
-- **AI Agent Node**: Set the agent type and response format
+- **AI Tool Function Node**: Create custom tools with JavaScript functions
+- **AI Tool HTTP Node**: Create tools that make HTTP requests to external APIs
+- **AI Agent Node**: Set the system prompt and response format
 - **Error Handling**: Always include a catch node to handle potential errors
+
+## Template Variables in HTTP Tools
+
+The AI Tool HTTP node supports template variables in the URL, headers, and body fields. These variables are replaced with values from the input object that the AI provides when calling the tool.
+
+### Template Variable Format
+
+Template variables use the format `${input.property}` where `property` is the name of a property in the input object. You can also access nested properties using dot notation: `${input.user.name}`.
+
+### Examples
+
+- **URL**: `https://api.example.com/users/${input.userId}`
+- **Headers**: 
+  ```json
+  {
+    "Authorization": "Bearer ${input.token}",
+    "Content-Type": "application/json"
+  }
+  ```
+- **Body**: 
+  ```json
+  {
+    "name": "${input.name}",
+    "email": "${input.email}"
+  }
+  ```
+
+When the AI calls the tool with an input object like `{ userId: "123", token: "abc", name: "John", email: "john@example.com" }`, the template variables will be replaced with the corresponding values.
 
 For more detailed configuration options, see the [README](../README.md).
