@@ -13,7 +13,6 @@
         "node-red-contrib",
         "node-red-contrib-ai-agent"
     ],
-    "main": "agent/ai-agent.js",
     "scripts": {
         "test": "mocha \"test/**/*.js\"",
         "update-models": "python scripts/update_models.py"
